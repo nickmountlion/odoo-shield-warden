@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_shield_finding_list" model="ir.ui.view">
+        <field name="name">shield.finding.list</field>
+        <field name="model">shield.finding</field>
+        <field name="arch" type="xml">
+            <list create="false" decoration-muted="state == 'resolved'" decoration-info="state == 'accepted'">
+                <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"
+                       decoration-warning="severity == 'medium'"/>
+                <field name="name"/>
+                <field name="domain"/>
+                <field name="status" optional="hide"/>
+                <field name="state" widget="badge" decoration-danger="state == 'open'"
+                       decoration-warning="state == 'in_progress'" decoration-info="state == 'accepted'"
+                       decoration-success="state == 'resolved'"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="due_date"/>
+                <field name="has_fix" string="Fix"/>
+                <field name="last_seen" optional="hide"/>
+                <field name="framework_refs" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shield_finding_form" model="ir.ui.view">
+        <field name="name">shield.finding.form</field>
+        <field name="model">shield.finding</field>
+        <field name="arch" type="xml">
+            <form create="false">
+                <header>
+                    <button name="action_apply_fix" type="object" string="Apply hardening" class="btn-primary"
+                            invisible="not has_fix or state == 'resolved'" groups="base.group_system"
+                            confirm="This changes the production configuration and is logged in the chatter. Continue?"/>
+                    <button name="action_start" type="object" string="Start remediation"
+                            invisible="state != 'open'" groups="odoo_shield_warden.group_shield_manager"/>
+                    <button name="action_accept_risk" type="object" string="Accept risk"
+                            invisible="state in ('accepted', 'resolved')" groups="odoo_shield_warden.group_shield_manager"/>
+                    <button name="action_recheck" type="object" string="Re-check now"
+                            invisible="state == 'resolved'" groups="odoo_shield_warden.group_shield_manager"/>
+                    <button name="action_reopen" type="object" string="Reopen"
+                            invisible="state not in ('accepted', 'resolved')" groups="odoo_shield_warden.group_shield_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="open,in_progress,resolved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="severity"/>
+                            <field name="status"/>
+                            <field name="domain"/>
+                            <field name="framework_refs"/>
+                        </group>
+                        <group>
+                            <field name="user_id" widget="many2one_avatar_user"/>
+                            <field name="due_date"/>
+                            <field name="first_seen"/>
+                            <field name="last_seen"/>
+                            <field name="resolved_date" invisible="not resolved_date"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Finding">
+                            <label for="detail" string="What we found"/>
+                            <field name="detail" readonly="1"/>
+                            <label for="remediation" string="How to fix it"/>
+                            <field name="remediation"/>
+                            <label for="evidence" string="Evidence" invisible="not evidence"/>
+                            <field name="evidence" readonly="1" invisible="not evidence"/>
+                        </page>
+                        <page string="Risk acceptance">
+                            <group>
+                                <field name="acceptance_reason" placeholder="Why this risk is accepted and which compensating controls apply"/>
+                                <field name="acceptance_expiry"/>
+                                <field name="accepted_by"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_shield_finding_kanban" model="ir.ui.view">
+        <field name="name">shield.finding.kanban</field>
+        <field name="model">shield.finding</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" create="false" group_create="false" records_draggable="false">
+                <templates>
+                    <t t-name="card">
+                        <field name="name" class="fw-bold"/>
+                        <div class="d-flex justify-content-between mt-1">
+                            <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"
+                                   decoration-warning="severity == 'medium'"/>
+                            <field name="user_id" widget="many2one_avatar_user"/>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_shield_finding_pivot" model="ir.ui.view">
+        <field name="name">shield.finding.pivot</field>
+        <field name="model">shield.finding</field>
+        <field name="arch" type="xml">
+            <pivot string="Findings">
+                <field name="domain" type="row"/>
+                <field name="severity" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_shield_finding_search" model="ir.ui.view">
+        <field name="name">shield.finding.search</field>
+        <field name="model">shield.finding</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="user_id"/>
+                <filter name="active_findings" string="Active" domain="[('state', 'in', ('open', 'in_progress'))]"/>
+                <filter name="accepted" string="Risk accepted" domain="[('state', '=', 'accepted')]"/>
+                <filter name="resolved" string="Resolved" domain="[('state', '=', 'resolved')]"/>
+                <separator/>
+                <filter name="critical_high" string="Critical &amp; high" domain="[('severity', 'in', ('critical', 'high'))]"/>
+                <filter name="fixable" string="One-click fix" domain="[('control_id.code', 'in', ('mfa_enforced', 'password_policy', 'dormant_users', 'signup_open', 'login_throttling', 'template_editors', 'payment_hold'))]"/>
+                <filter name="mine" string="My findings" domain="[('user_id', '=', uid)]"/>
+                <group>
+                    <filter name="group_domain" string="Domain" context="{'group_by': 'domain'}"/>
+                    <filter name="group_severity" string="Severity" context="{'group_by': 'severity'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_owner" string="Owner" context="{'group_by': 'user_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_shield_findings" model="ir.actions.act_window">
+        <field name="name">Findings</field>
+        <field name="res_model">shield.finding</field>
+        <field name="view_mode">list,kanban,pivot,form</field>
+        <field name="context">{'search_default_active_findings': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No open findings</p>
+            <p>Findings appear when an assessment detects a failing control and resolve themselves once it passes.</p>
+        </field>
+    </record>
+
+    <record id="action_shield_risk_register" model="ir.actions.act_window">
+        <field name="name">Risk Register</field>
+        <field name="res_model">shield.finding</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'accepted')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No accepted risks</p>
+            <p>Accepted risks need a justification and an expiry date; they reopen automatically when they expire.</p>
+        </field>
+    </record>
+</odoo>

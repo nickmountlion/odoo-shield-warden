@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Money-at-risk events -->
+    <record id="view_shield_risk_event_list" model="ir.ui.view">
+        <field name="name">shield.risk.event.list</field>
+        <field name="model">shield.risk.event</field>
+        <field name="arch" type="xml">
+            <list create="false" decoration-muted="state in ('legitimate', 'closed')" decoration-danger="state == 'escalated'">
+                <field name="event_date"/>
+                <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"
+                       decoration-warning="severity == 'medium'"/>
+                <field name="rule"/>
+                <field name="detail"/>
+                <field name="actor_id" widget="many2one_avatar_user"/>
+                <field name="partner_id" optional="hide"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="amount" sum="Total at risk"/>
+                <field name="state" widget="badge" decoration-danger="state == 'escalated'"
+                       decoration-warning="state == 'open'" decoration-success="state == 'legitimate'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shield_risk_event_form" model="ir.ui.view">
+        <field name="name">shield.risk.event.form</field>
+        <field name="model">shield.risk.event</field>
+        <field name="arch" type="xml">
+            <form create="false">
+                <header>
+                    <button name="action_mark_legitimate" type="object" string="Verified legitimate" class="btn-primary"
+                            invisible="state not in ('open', 'escalated')" groups="odoo_shield_warden.group_shield_manager"/>
+                    <button name="action_escalate" type="object" string="Escalate"
+                            invisible="state != 'open'" groups="odoo_shield_warden.group_shield_manager"/>
+                    <button name="action_reopen" type="object" string="Reopen"
+                            invisible="state == 'open'" groups="odoo_shield_warden.group_shield_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="open,escalated,legitimate"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h2><field name="rule"/></h2>
+                        <h1><field name="amount"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="severity"/>
+                            <field name="event_date"/>
+                            <field name="actor_id" widget="many2one_avatar_user"/>
+                            <field name="partner_id"/>
+                        </group>
+                        <group>
+                            <field name="payment_id" invisible="not payment_id"/>
+                            <field name="move_id" invisible="not move_id"/>
+                            <field name="bank_id" invisible="not bank_id"/>
+                            <field name="reviewer_id" invisible="not reviewer_id"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <label for="detail" string="What happened"/>
+                    <field name="detail"/>
+                    <label for="review_note"/>
+                    <field name="review_note" placeholder="How was it verified? e.g. 'Called vendor CFO on number from 2024 contract, account change confirmed.'"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_shield_risk_event_pivot" model="ir.ui.view">
+        <field name="name">shield.risk.event.pivot</field>
+        <field name="model">shield.risk.event</field>
+        <field name="arch" type="xml">
+            <pivot string="Money at risk">
+                <field name="rule" type="row"/>
+                <field name="state" type="col"/>
+                <field name="amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_shield_risk_event_search" model="ir.ui.view">
+        <field name="name">shield.risk.event.search</field>
+        <field name="model">shield.risk.event</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="detail"/>
+                <field name="actor_id"/>
+                <field name="partner_id"/>
+                <filter name="to_review" string="To review" domain="[('state', 'in', ('open', 'escalated'))]"/>
+                <filter name="critical_high" string="Critical &amp; high" domain="[('severity', 'in', ('critical', 'high'))]"/>
+                <group>
+                    <filter name="group_rule" string="Rule" context="{'group_by': 'rule'}"/>
+                    <filter name="group_actor" string="Done by" context="{'group_by': 'actor_id'}"/>
+                    <filter name="group_vendor" string="Vendor" context="{'group_by': 'partner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_shield_risk_events" model="ir.actions.act_window">
+        <field name="name">Money at Risk</field>
+        <field name="res_model">shield.risk.event</field>
+        <field name="view_mode">list,pivot,form</field>
+        <field name="context">{'search_default_to_review': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No risky payments detected</p>
+            <p>Each assessment scans 12 months of vendor payments and bills for bank-detail changes,
+               self-verified bank accounts, self-paid bills and duplicate bills.</p>
+        </field>
+    </record>
+
+    <!-- Access conflicts (latest assessment) -->
+    <record id="view_shield_access_conflict_list" model="ir.ui.view">
+        <field name="name">shield.access.conflict.list</field>
+        <field name="model">shield.access.conflict</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false">
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="combo"/>
+                <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"/>
+                <field name="capabilities"/>
+                <field name="payment_count"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="exposure"/>
+                <field name="assessment_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shield_access_conflict_search" model="ir.ui.view">
+        <field name="name">shield.access.conflict.search</field>
+        <field name="model">shield.access.conflict</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="user_id"/>
+                <field name="assessment_id"/>
+                <group>
+                    <filter name="group_user" string="User" context="{'group_by': 'user_id'}"/>
+                    <filter name="group_combo" string="Conflict" context="{'group_by': 'combo'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_shield_access_conflicts" model="ir.actions.server">
+        <field name="name">Access Conflicts</field>
+        <field name="model_id" ref="model_shield_access_conflict"/>
+        <field name="state">code</field>
+        <field name="code">
+latest = env['shield.assessment'].search([], limit=1)
+action = {
+    'type': 'ir.actions.act_window', 'name': 'Access Conflicts (latest assessment)',
+    'res_model': 'shield.access.conflict', 'view_mode': 'list',
+    'domain': [('assessment_id', '=', latest.id)],
+}
+        </field>
+    </record>
+
+    <!-- Assessment: money headline -->
+    <record id="view_shield_assessment_form_finance" model="ir.ui.view">
+        <field name="name">shield.assessment.form.finance</field>
+        <field name="model">shield.assessment</field>
+        <field name="inherit_id" ref="odoo_shield_warden.view_shield_assessment_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/group" position="before">
+                <div class="alert alert-danger d-flex gap-5" role="alert" invisible="not transaction_exposure and not access_exposure">
+                    <div>
+                        <div class="small">Money at risk (unreviewed)</div>
+                        <div class="fs-3 fw-bold"><field name="transaction_exposure"/></div>
+                        <div class="small"><field name="case_count" class="oe_inline"/> case(s) to review
+                            (<field name="risk_event_count" class="oe_inline"/> alerts)</div>
+                    </div>
+                    <div>
+                        <div class="small">Paid by users with toxic rights (12 months)</div>
+                        <div class="fs-3 fw-bold"><field name="access_exposure"/></div>
+                    </div>
+                    <field name="currency_id" invisible="1"/>
+                </div>
+                <div invisible="not rosi_html">
+                    <h5>Return on security investment (ROSI)</h5>
+                    <field name="rosi_html" nolabel="1"/>
+                </div>
+            </xpath>
+            <xpath expr="//notebook/page[1]" position="after">
+                <page string="Access conflicts" invisible="not conflict_ids">
+                    <field name="conflict_ids">
+                        <list>
+                            <field name="user_id" widget="many2one_avatar_user"/>
+                            <field name="combo"/>
+                            <field name="severity"/>
+                            <field name="capabilities"/>
+                            <field name="payment_count"/>
+                            <field name="currency_id" column_invisible="True"/>
+                            <field name="exposure"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_shield_assessment_kanban_finance" model="ir.ui.view">
+        <field name="name">shield.assessment.kanban.finance</field>
+        <field name="model">shield.assessment</field>
+        <field name="inherit_id" ref="odoo_shield_warden.view_shield_assessment_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='critical_count']/.." position="after">
+                <div class="mt-2 text-danger fw-bold" invisible="not transaction_exposure">
+                    Money at risk: <field name="transaction_exposure"/>
+                    <field name="currency_id" invisible="1"/>
+                </div>
+                <div class="mt-2 text-muted" invisible="transaction_exposure">Money at risk: none found</div>
+            </xpath>
+        </field>
+    </record>
+
+
+    <menuitem id="menu_shield_access_conflicts" name="Access Conflicts" parent="odoo_shield_warden.menu_shield_root"
+              action="action_shield_access_conflicts" sequence="6"/>
+</odoo>

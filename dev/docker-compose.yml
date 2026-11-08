@@ -1,0 +1,32 @@
+# Local development stack: Odoo 18 + PostgreSQL 16 with this repo's addons mounted.
+# Usage (from this folder): docker compose up -d   ->   http://localhost:8069
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  odoo:
+    image: odoo:18.0
+    depends_on:
+      - db
+    ports:
+      - "8069:8069"
+    environment:
+      HOST: db
+      USER: odoo
+      PASSWORD: odoo
+    volumes:
+      - odoo-data:/var/lib/odoo
+      - ../addons:/mnt/odoo-shield-warden-addons:ro
+      - ./config:/etc/odoo
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  odoo-data:

@@ -1,0 +1,296 @@
+{
+  "label": "kaizen-w4",
+  "assessment_id": 5,
+  "security_score": 12.1,
+  "grc_score": 1.9,
+  "detected": 22,
+  "total": 22,
+  "scenarios": [
+    {
+      "scenario": "A1 Silent IBAN swap (tracking disabled) + payment",
+      "detected": true,
+      "checks": [
+        {
+          "control": "ccm_untracked_bank_change",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        },
+        {
+          "control": "ccm_bank_change_payment",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A1b Silent IBAN swap after baseline (wave 2)",
+      "detected": true,
+      "checks": [
+        {
+          "control": "ccm_untracked_bank_change",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A2 Vendor IBAN = employee's own account",
+      "detected": true,
+      "checks": [
+        {
+          "control": "ccm_shared_bank_account",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A3 Backdoor scheduled action (code in DB)",
+      "detected": true,
+      "checks": [
+        {
+          "control": "db_code_objects",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A4 Record rule hiding fraud from auditors",
+      "detected": true,
+      "checks": [
+        {
+          "control": "custom_record_rules",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A5 New account with admin rights",
+      "detected": true,
+      "checks": [
+        {
+          "control": "privilege_drift",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A6 Brute-force protection disabled",
+      "detected": true,
+      "checks": [
+        {
+          "control": "login_throttling",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A7 Mass export of customer data",
+      "detected": true,
+      "checks": [
+        {
+          "control": "mass_export",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A8 Template editor granted to non-admin",
+      "detected": true,
+      "checks": [
+        {
+          "control": "template_editors",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A9 Weak database credentials",
+      "detected": true,
+      "checks": [
+        {
+          "control": "db_credentials",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A10 Misconfigured third-party module",
+      "detected": true,
+      "checks": [
+        {
+          "control": "custom_module_acl",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A11 Lookalike vendor paid the same day",
+      "detected": true,
+      "checks": [
+        {
+          "control": "ccm_lookalike_vendor",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        },
+        {
+          "control": "ccm_new_vendor_fast_payment",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A12 Audit trail erased (chatter deleted)",
+      "detected": true,
+      "checks": [
+        {
+          "control": "message_deletions",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A13 Invoice PDF made public",
+      "detected": true,
+      "checks": [
+        {
+          "control": "public_attachments",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A15 Seals only stored inside Odoo",
+      "detected": true,
+      "checks": [
+        {
+          "control": "seal_offbox",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A16 Brute force ending in account takeover",
+      "detected": true,
+      "checks": [
+        {
+          "control": "login_attacks",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A17 Password spraying",
+      "detected": true,
+      "checks": [
+        {
+          "control": "login_attacks",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A18 Insider disables Shield",
+      "detected": true,
+      "checks": [
+        {
+          "control": "shield_integrity",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A19 Build predates a published advisory fix (offline feed)",
+      "detected": true,
+      "checks": [
+        {
+          "control": "cve_feed",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "R1 Tracked IBAN swap + self-trust (seeded)",
+      "detected": true,
+      "checks": [
+        {
+          "control": "ccm_bank_change_payment",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        },
+        {
+          "control": "ccm_self_trusted_bank",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "R2 Bill entered and paid by same user (seeded)",
+      "detected": true,
+      "checks": [
+        {
+          "control": "ccm_self_paid_bill",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "R3 Duplicate vendor bill (seeded)",
+      "detected": true,
+      "checks": [
+        {
+          "control": "ccm_duplicate_bill",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    }
+  ],
+  "cases": 5,
+  "alerts": 15,
+  "money_at_risk": 54800.0,
+  "prevention": {}
+}

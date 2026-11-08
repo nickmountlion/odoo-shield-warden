@@ -1,0 +1,24 @@
+{
+  "name": "odoo-shield-warden-mcp-server",
+  "version": "1.0.0",
+  "description": "Read-only MCP server for Odoo Shield Warden: Odoo hardening and continuous-compliance audits",
+  "type": "module",
+  "bin": { "odoo-shield-warden-mcp-server": "dist/index.js" },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "smoke": "tsx scripts/smoke.ts"
+  },
+  "engines": { "node": ">=20.3" },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.3.1",
+    "zod": "^4.2.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.3.1",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3"
+  }
+}

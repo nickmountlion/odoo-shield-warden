@@ -1,0 +1,44 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# IDEs & Editors
+.vscode/
+.idea/
+
+# Environment variables & secrets
+.env
+.env.*
+*.env
+
+# Keystores & signing keys
+*.keystore
+*.jks
+*.pem
+*.p12
+keystore.properties
+local.properties
+
+# Logs, dumps & database backups
+*.log
+logs/
+*.dump
+*.sql
+*.sql.gz
+*.bak
+*.bundle
+dumps/
+snapshot-*/
+
+# Local scratch, reports & sanitization output
+local/
+reports/
+SANITIZE_REPORT.md
+REBRAND_NOTES.md
+
+# Node / MCP build dependencies
+node_modules/

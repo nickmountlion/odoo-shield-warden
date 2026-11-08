@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_shield_risk_event_user,shield.risk.event user,model_shield_risk_event,odoo_shield_warden.group_shield_user,1,0,0,0
+access_shield_risk_event_manager,shield.risk.event manager,model_shield_risk_event,odoo_shield_warden.group_shield_manager,1,1,0,0
+access_shield_access_conflict_user,shield.access.conflict user,model_shield_access_conflict,odoo_shield_warden.group_shield_user,1,0,0,0
+access_shield_access_conflict_manager,shield.access.conflict manager,model_shield_access_conflict,odoo_shield_warden.group_shield_manager,1,1,1,1
+access_shield_bank_fingerprint_manager,shield.bank.fingerprint manager,model_shield_bank_fingerprint,odoo_shield_warden.group_shield_manager,1,0,0,0
+access_shield_risk_case_user,shield.risk.case user,model_shield_risk_case,odoo_shield_warden.group_shield_user,1,0,0,0
+access_shield_risk_case_manager,shield.risk.case manager,model_shield_risk_case,odoo_shield_warden.group_shield_manager,1,1,0,0

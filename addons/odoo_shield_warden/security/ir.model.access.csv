@@ -1,0 +1,22 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_shield_framework_user,shield.framework user,model_shield_framework,group_shield_user,1,0,0,0
+access_shield_framework_manager,shield.framework manager,model_shield_framework,group_shield_manager,1,1,1,1
+access_shield_requirement_user,shield.requirement user,model_shield_requirement,group_shield_user,1,0,0,0
+access_shield_requirement_manager,shield.requirement manager,model_shield_requirement,group_shield_manager,1,1,1,1
+access_shield_control_user,shield.control user,model_shield_control,group_shield_user,1,0,0,0
+access_shield_control_manager,shield.control manager,model_shield_control,group_shield_manager,1,1,0,0
+access_shield_assessment_user,shield.assessment user,model_shield_assessment,group_shield_user,1,0,0,0
+access_shield_assessment_manager,shield.assessment manager,model_shield_assessment,group_shield_manager,1,1,1,1
+access_shield_assessment_result_user,shield.assessment.result user,model_shield_assessment_result,group_shield_user,1,0,0,0
+access_shield_assessment_result_manager,shield.assessment.result manager,model_shield_assessment_result,group_shield_manager,1,1,1,1
+access_shield_framework_score_user,shield.framework.score user,model_shield_framework_score,group_shield_user,1,0,0,0
+access_shield_framework_score_manager,shield.framework.score manager,model_shield_framework_score,group_shield_manager,1,1,1,1
+access_shield_finding_user,shield.finding user,model_shield_finding,group_shield_user,1,0,0,0
+access_shield_finding_manager,shield.finding manager,model_shield_finding,group_shield_manager,1,1,1,0
+access_shield_attestation_user,shield.attestation user,model_shield_attestation,group_shield_user,1,0,0,0
+access_shield_attestation_manager,shield.attestation manager,model_shield_attestation,group_shield_manager,1,1,1,0
+access_shield_export_log_user,shield.export.log user,model_shield_export_log,group_shield_user,1,0,0,0
+access_shield_export_log_manager,shield.export.log manager,model_shield_export_log,group_shield_manager,1,0,0,0
+access_shield_deletion_log_user,shield.deletion.log user,model_shield_deletion_log,group_shield_user,1,0,0,0
+access_shield_login_log_user,shield.login.log user,model_shield_login_log,group_shield_user,1,0,0,0
+access_shield_run_wizard_manager,shield.run.wizard manager,model_shield_run_wizard,group_shield_manager,1,1,1,1

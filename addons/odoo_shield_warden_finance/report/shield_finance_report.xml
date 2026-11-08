@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_scorecard_finance" inherit_id="odoo_shield_warden.report_scorecard">
+        <xpath expr="//h4[1]" position="before">
+            <div t-if="o.transaction_exposure or o.access_exposure"
+                 style="border: 2px solid #b3261e; padding: 10px 14px; margin-bottom: 14px;">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td style="width: 50%">
+                            <div class="text-muted">Money at risk (open cases)</div>
+                            <div style="font-size: 26px; font-weight: bold; color: #b3261e;">
+                                <span t-field="o.transaction_exposure" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                            </div>
+                            <div><span t-field="o.case_count"/> case(s) to review (<span t-field="o.risk_event_count"/> alerts)</div>
+                        </td>
+                        <td style="width: 50%">
+                            <div class="text-muted">Paid by users holding toxic rights (12 months)</div>
+                            <div style="font-size: 26px; font-weight: bold;">
+                                <span t-field="o.access_exposure" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                            </div>
+                            <div><span t-esc="len(o.conflict_ids.mapped('user_id'))"/> user(s) with conflicting rights</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div t-if="o.transaction_exposure" style="margin-bottom: 14px;">
+                <h4>Return on security investment (ROSI)</h4>
+                <table class="table table-sm" style="font-size: 12px;">
+                    <thead><tr><th>Scenario</th><th class="text-end">Annual cost</th><th class="text-end">Net benefit / yr</th><th class="text-end">ROSI</th><th class="text-end">Break-even annual chance</th></tr></thead>
+                    <tbody>
+                        <tr t-foreach="o.rosi_scenarios()" t-as="r">
+                            <td><span t-esc="r['label']"/></td>
+                            <td class="text-end"><span t-esc="o.currency_id.format(r['cost'])"/></td>
+                            <td class="text-end"><span t-esc="o.currency_id.format(r['net'])"/></td>
+                            <td class="text-end"><span t-esc="r['rosi_text']"/></td>
+                            <td class="text-end"><span t-esc="r['breakeven_text']"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="text-muted" style="font-size: 11px;">If a loss of <span t-esc="o.currency_id.format(o.transaction_exposure)"/> recurs once a year. Cost = Shield licence + alert-review labour. Probability, recovery, hold effectiveness and labour are estimates, not benchmarks.</div>
+            </div>
+            <t t-set="cases" t-value="o.open_cases()"/>
+            <div t-if="cases" style="margin-bottom: 14px;">
+                <h4>Cases to review</h4>
+                <table class="table table-sm" style="font-size: 12px;">
+                    <thead><tr><th>Severity</th><th>Incident</th><th>Why</th><th class="text-end">At risk</th></tr></thead>
+                    <tbody>
+                        <tr t-foreach="cases" t-as="c">
+                            <td><span t-field="c.severity"/></td>
+                            <td><strong t-field="c.name"/><br/>
+                                <span class="text-muted">by <span t-esc="', '.join(c.actor_ids.mapped('login'))"/></span></td>
+                            <td><span t-esc="', '.join(sorted(set(c.event_ids.filtered(lambda e: e.state in ('open', 'escalated')).mapped(lambda e: dict(e._fields['rule'].selection)[e.rule]))))"/></td>
+                            <td class="text-end"><strong t-field="c.amount" t-options="{'widget': 'monetary', 'display_currency': c.currency_id}"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </xpath>
+    </template>
+</odoo>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shield ROSI Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<style>
+:root{--bg:#f8f9fa;--card:#fff;--head:#1a1a2e;--text:#212529;--muted:#6c757d;--c1:#4C72B0;--c2:#DD8452;--c3:#55A868;--pos:#28a745;--neg:#dc3545;--gap:16px;--r:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+.wrap{max-width:1300px;margin:0 auto;padding:var(--gap)}
+header{background:var(--head);color:#fff;padding:20px 24px;border-radius:var(--r);margin-bottom:var(--gap)}
+header h1{font-size:20px}
+header p{font-size:13px;opacity:.75;margin-top:4px}
+.panel,.card{background:var(--card);border-radius:var(--r);padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:var(--gap)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.ctl label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px}
+.ctl .val{font-weight:700;font-size:18px}
+.ctl input[type=range]{width:100%}
+.ctl select,.ctl input[type=number]{padding:6px 10px;border:1px solid #ced4da;border-radius:4px;font-size:14px;width:100%}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--gap);margin-bottom:var(--gap)}
+.kpi{background:var(--card);border-radius:var(--r);padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-top:4px solid var(--c1)}
+.kpi h2{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.kpi .big{font-size:30px;font-weight:700}
+.kpi .sub{font-size:13px;color:var(--muted)}
+.pos{color:var(--pos)}.neg{color:var(--neg)}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:var(--gap)}
+.charts h3{font-size:14px;margin-bottom:12px}
+.chartbox{position:relative;height:300px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;border-bottom:2px solid #dee2e6;color:var(--muted);font-size:12px;text-transform:uppercase}
+td{padding:10px 12px;border-bottom:1px solid #f0f0f0}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px}
+.tag.src{background:#e3f2e8;color:#1e6b34}.tag.est{background:#fdecd7;color:#8a4b0a}.tag.demo{background:#e4ebf5;color:#2b4a7a}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+.scroll{overflow-x:auto}
+@media(max-width:768px){.charts{grid-template-columns:1fr}}
+@media print{.controls{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Shield: Return on Security Investment (ROSI)</h1>
+  <p>Net benefit = P &times; Loss &times; (1 &minus; recovered anyway) &times; hold effectiveness &minus; annual cost &nbsp;|&nbsp; ROSI = net benefit &divide; annual cost &nbsp;|&nbsp; Orange tags are assumptions, not benchmarks.</p>
+</header>
+
+<div class="panel">
+  <div class="controls">
+    <div class="ctl">
+      <label for="lossSel">Loss per incident</label>
+      <select id="lossSel">
+        <option value="18400">18,400: swapped-IBAN/CBU payment (demo)</option>
+        <option value="27900">27,900: total demo exposure (upper reading)</option>
+        <option value="123000">123,000: FBI IC3 average BEC complaint (2025)</option>
+        <option value="custom">Custom&hellip;</option>
+      </select>
+      <input type="number" id="lossCustom" min="0" step="500" value="50000" style="margin-top:6px;display:none">
+    </div>
+    <div class="ctl">
+      <label for="costMode">Annual cost (licence + alert-review labour)</label>
+      <select id="costMode">
+        <option value="scen">Report defaults (3,000 / 2,100 / 1,500)</option>
+        <option value="tier">Shield pricing tier + review labour (2,500 / 1,600 / 1,000)</option>
+        <option value="own">My own number for all scenarios</option>
+      </select>
+      <select id="tierSel" style="display:none;margin-top:8px">
+        <option value="490">Essential: &euro;490/yr</option>
+        <option value="1490">Professional: &euro;1,490/yr</option>
+        <option value="3900">Business: &euro;3,900/yr</option>
+        <option value="9000">Enterprise from &euro;9,000/yr</option>
+        <option value="0">Community: free</option>
+      </select>
+      <div id="ownCostBox" style="display:none;margin-top:8px">
+        <span class="val" id="ownCostVal">$2,100</span>
+        <input type="range" id="ownCost" min="0" max="40000" step="100" value="2100">
+        <div class="note">Shield's price is not set yet. Drag to test; the break-even moves with it.</div>
+      </div>
+    </div>
+    <div class="ctl">
+      <label for="pSlide">Annual probability of a successful swap (all scenarios)</label>
+      <select id="pMode">
+        <option value="scen">Scenario values (5% / 10% / 20%)</option>
+        <option value="own">One value for all scenarios</option>
+      </select>
+      <div id="ownPBox" style="display:none;margin-top:8px">
+        <span class="val" id="pVal">10%</span>
+        <input type="range" id="pSlide" min="1" max="100" step="1" value="10">
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="kpis" id="kpis"></section>
+
+<section class="charts">
+  <div class="card"><h3>Net benefit per year by scenario</h3><div class="chartbox"><canvas id="netChart"></canvas></div></div>
+  <div class="card"><h3>ROSI vs annual probability (zero line = break-even)</h3><div class="chartbox"><canvas id="sensChart"></canvas></div></div>
+</section>
+
+<div class="card scroll">
+  <h3 style="font-size:14px;margin-bottom:12px">Inputs and where they come from</h3>
+  <table id="inputs"></table>
+  <p class="note">Sources: AFP Payments Fraud and Control Survey 2026; ACFE Occupational Fraud 2026; FBI IC3 2025; UK Finance 2025. Full notes and source-quality warnings: reports/Payment fraud benchmarks for ROSI.md. The 18,400 / 27,900 amounts come from the synthetic Shield demo database, not a customer. ACFE data covers insider fraud only; IC3 and UK Finance cover external fraud. Several figures are secondary sources. Insurance-premium and audit-fee savings are deliberately excluded because no evidence supports them.</p>
+</div>
+</div>
+
+<script>
+// Scenario inputs. p, e, r, cost are [ESTIMATE]s from the research report.
+const SCEN = [
+  {name:"Conservative", p:0.05, r:0.60, e:0.50, cost:3000, labour:2500, color:"#C44E52"},
+  {name:"Base",         p:0.10, r:0.40, e:0.70, cost:2100, labour:1600, color:"#4C72B0"},
+  {name:"Aggressive",   p:0.20, r:0.20, e:0.80, cost:1500, labour:1000, color:"#55A868"}
+];
+const $ = id => document.getElementById(id);
+const fm = v => (v<0?"-":"") + "$" + Math.abs(Math.round(v)).toLocaleString();
+const pc = v => (v*100).toFixed(0) + "%";
+
+// Pure calculation (no DOM), so it can be tested on its own.
+function calc(s, L, p, cost){
+  const avoided = p * L * (1 - s.r) * s.e;      // expected loss avoided per year
+  const net = avoided - cost;
+  const rosi = cost > 0 ? net / cost : NaN;
+  const denom = L * (1 - s.r) * s.e;
+  const beP = denom > 0 ? cost / denom : Infinity; // break-even annual probability
+  return {avoided, net, rosi, beP};
+}
+
+function state(){
+  const L = $("lossSel").value === "custom" ? +$("lossCustom").value : +$("lossSel").value;
+  const mode = $("costMode").value;
+  const ownCost = mode === "own" ? +$("ownCost").value : null;
+  const tier = mode === "tier" ? +$("tierSel").value : null;
+  const ownP = $("pMode").value === "own" ? +$("pSlide").value / 100 : null;
+  return SCEN.map(s => {
+    const p = ownP ?? s.p, cost = ownCost ?? (tier !== null ? tier + s.labour : s.cost);
+    return Object.assign({s, L, p, cost}, calc(s, L, p, cost));
+  });
+}
+
+let netChart, sensChart;
+function render(){
+  $("lossCustom").style.display = $("lossSel").value === "custom" ? "block" : "none";
+  $("tierSel").style.display = $("costMode").value === "tier" ? "block" : "none";
+  $("ownCostBox").style.display = $("costMode").value === "own" ? "block" : "none";
+  $("ownPBox").style.display = $("pMode").value === "own" ? "block" : "none";
+  $("ownCostVal").textContent = fm(+$("ownCost").value);
+  $("pVal").textContent = $("pSlide").value + "%";
+
+  const rows = state();
+  $("kpis").innerHTML = rows.map(r => {
+    const cls = r.net >= 0 ? "pos" : "neg";
+    const years = isFinite(r.beP) && r.beP > 0 ? (1 / r.beP) : null;
+    return `<div class="kpi" style="border-top-color:${r.s.color}">
+      <h2>${r.s.name}</h2>
+      <div class="big ${cls}">${isNaN(r.rosi) ? "n/a" : Math.round(r.rosi*100) + "% ROSI"}</div>
+      <div class="sub">Net benefit <b class="${cls}">${fm(r.net)}</b> / yr on cost ${fm(r.cost)}</div>
+      <div class="sub">Break-even: ${r.beP > 1 ? "never on expected value (needs &gt;100% chance)" : pc(r.beP) + " annual chance, i.e. one such incident every " + years.toFixed(1) + " yrs"}</div>
+    </div>`;
+  }).join("");
+
+  const labels = rows.map(r => r.s.name), nets = rows.map(r => Math.round(r.net));
+  if(!netChart){
+    netChart = new Chart($("netChart"), {type:"bar",
+      data:{labels, datasets:[{data:nets, backgroundColor:rows.map(r=>r.s.color+"CC"), borderRadius:4}]},
+      options:{responsive:true, maintainAspectRatio:false, animation:false,
+        plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>fm(c.parsed.y)}}},
+        scales:{y:{ticks:{callback:v=>fm(v)}}, x:{grid:{display:false}}}}});
+  } else { netChart.data.labels = labels; netChart.data.datasets[0].data = nets;
+           netChart.data.datasets[0].backgroundColor = rows.map(r=>r.s.color+"CC"); netChart.update("none"); }
+
+  const ps = Array.from({length:40}, (_, i) => (i + 1) * 0.025); // 2.5% .. 100%
+  const sets = rows.map(r => ({label:r.s.name, borderColor:r.s.color, backgroundColor:r.s.color, borderWidth:2, pointRadius:0, tension:0,
+    data: ps.map(p => ({x:p*100, y: Math.max(-100, Math.min(600, calc(r.s, r.L, p, r.cost).rosi * 100))}))}));
+  if(!sensChart){
+    sensChart = new Chart($("sensChart"), {type:"line", data:{datasets:sets},
+      options:{responsive:true, maintainAspectRatio:false, animation:false, parsing:false,
+        interaction:{mode:"nearest", intersect:false},
+        plugins:{legend:{position:"top", labels:{usePointStyle:true}}, tooltip:{callbacks:{label:c=>c.dataset.label+": "+Math.round(c.parsed.y)+"% ROSI at "+c.parsed.x.toFixed(1)+"% chance"}}},
+        scales:{x:{type:"linear", title:{display:true,text:"Annual probability of a successful incident (%)"}, min:0, max:100},
+                y:{title:{display:true,text:"ROSI (%), capped for display"}, min:-100, max:600, grid:{color:c=>c.tick.value===0?"#212529":"#e9ecef"}}}}});
+  } else { sensChart.data.datasets = sets; sensChart.update("none"); }
+
+  $("inputs").innerHTML = `<thead><tr><th>Input</th><th>Conservative</th><th>Base</th><th>Aggressive</th><th>Status</th><th>Basis</th></tr></thead><tbody>
+   <tr><td>Loss per incident</td><td colspan="3">${fm(rows[0].L)}</td><td><span class="tag demo">DEMO / SOURCED</span></td><td>Demo scenario; IC3 2025 $3.05B / 24,768 complaints = ~$123k (my division); UK Finance 2025 ~&pound;17.9k per invoice scam</td></tr>
+   <tr><td>Annual probability of a successful incident</td>${rows.map(r=>`<td>${pc(r.p)}</td>`).join("")}<td><span class="tag est">ESTIMATE</span></td><td>No sourced loss frequency. 74% of US firms were <i>targeted</i> by BEC (AFP 2026) but that is attempts, not losses. Planning prior 5-20%</td></tr>
+   <tr><td>Recovered anyway (no Shield)</td>${rows.map(r=>`<td>${pc(r.s.r)}</td>`).join("")}<td><span class="tag est">ESTIMATE</span></td><td>Bracketed by UK Finance (48% returned) and IC3 Kill Chain (58% frozen, not the same as returned)</td></tr>
+   <tr><td>Hold effectiveness</td>${rows.map(r=>`<td>${pc(r.s.e)}</td>`).join("")}<td><span class="tag est">ESTIMATE</span></td><td>ACFE 2026: monitoring = 53% lower median loss (37% avg of 18 controls); AFP: 63% rate call-back "very effective", yet 20 in 100 attempts succeed</td></tr>
+   <tr><td>Annual cost</td>${rows.map(r=>`<td>${fm(r.cost)}</td>`).join("")}<td><span class="tag est">ESTIMATE</span></td><td>Licence + alert-review labour. Shield price not set. Anchors: Odoo apps ~$47-49 one-time; Trustpair EUR 39,000/yr + setup (enterprise)</td></tr>
+  </tbody>`;
+}
+["lossSel","lossCustom","costMode","tierSel","ownCost","pMode","pSlide"].forEach(id => $(id).addEventListener("input", render));
+render();
+</script>
+</body>
+</html>

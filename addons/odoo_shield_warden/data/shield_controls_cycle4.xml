@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kaizen cycle 4 (docs/KAIZEN_CYCLE_4.md). -->
+<odoo noupdate="1">
+    <record id="req_soc_cc7_3" model="shield.requirement"><field name="framework_id" ref="fw_soc2"/><field name="ref">CC7.3</field><field name="name">Evaluation of security events</field></record>
+    <record id="req_cis_8_11" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">8.11</field><field name="name">Conduct audit log reviews</field></record>
+
+    <record id="ctl_login_attacks" model="shield.control">
+        <field name="code">login_attacks</field><field name="sequence">20</field>
+        <field name="name">No brute force, spraying or takeover</field>
+        <field name="domain">identity</field><field name="severity">high</field>
+        <field name="description">Odoo keeps failed logins only in the server log and in memory. Shield records them (web, XML-RPC and JSON-RPC) and flags password guessing against one account, spraying across many accounts from one IP, and, critically, a successful login right after a run of failures.</field>
+        <field name="remediation">For a takeover: reset that user's password, revoke their API keys, end their sessions, enforce 2FA and review what the account did since. For guessing or spraying: block the IP at the proxy and keep login throttling on.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_5'), ref('req_iso_8_16'), ref('req_soc_cc7_2'), ref('req_soc_cc7_3'), ref('req_cis_8_11')])]"/>
+    </record>
+    <record id="ctl_shield_integrity" model="shield.control">
+        <field name="code">shield_integrity</field><field name="sequence">2</field>
+        <field name="name">Shield itself not tampered with</field>
+        <field name="domain">governance</field><field name="severity">critical</field>
+        <field name="description">An insider who controls Odoo can quietly disable the monitor: archive controls, stop the weekly schedule, switch off the payment hold or seal receipts. Shield compares itself with the previous sealed assessment and flags any protection that was passing and has been switched off.</field>
+        <field name="remediation">Restore the disabled pieces, then find who changed them (Settings > Technical > System Parameters / Scheduled Actions history) and review that user's activity.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_9'), ref('req_iso_8_16'), ref('req_soc_cc7_1'), ref('req_soc_cc7_3')])]"/>
+    </record>
+</odoo>

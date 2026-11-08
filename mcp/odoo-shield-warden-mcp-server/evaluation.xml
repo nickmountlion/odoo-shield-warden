@@ -1,0 +1,14 @@
+<!-- Fixture-based: answers hold for the mock Odoo in scripts/smoke.ts (client "acme", 3 internal users,
+     1 portal user). Re-derive them against a real pilot client before using as a live benchmark. -->
+<evaluation>
+  <qa_pair><question>Using the Shield tools for client "acme", which administrator has no two-factor authentication? Answer with the login.</question><answer>ana@acme.com</answer></qa_pair>
+  <qa_pair><question>For client "acme", how many internal users are Settings administrators?</question><answer>1</answer></qa_pair>
+  <qa_pair><question>For client "acme" with the default 90-day threshold, which active account is dormant? Answer with the login.</question><answer>luis@acme.com</answer></qa_pair>
+  <qa_pair><question>For client "acme", which user holds both the purchase manager and accounting manager groups (a segregation-of-duties conflict)? Answer with the login.</question><answer>luis@acme.com</answer></qa_pair>
+  <qa_pair><question>What is the value of web.base.url for client "acme" that makes the configuration audit flag it?</question><answer>http://erp.acme.com</answer></qa_pair>
+  <qa_pair><question>How many portal/external users does client "acme" have?</question><answer>1</answer></qa_pair>
+  <qa_pair><question>What minimum password length does client "acme" effectively enforce (Odoo default if unset)?</question><answer>8</answer></qa_pair>
+  <qa_pair><question>For a client on Odoo Online (SaaS), what level of server access does Shield assume?</question><answer>No server access</answer></qa_pair>
+  <qa_pair><question>What Odoo server version is publicly disclosed by the instance behind client "acme"'s URL, according to the external scan (authorised)?</question><answer>17.0</answer></qa_pair>
+  <qa_pair><question>How many internal users in total are included in the access audit for client "acme"?</question><answer>3</answer></qa_pair>
+</evaluation>

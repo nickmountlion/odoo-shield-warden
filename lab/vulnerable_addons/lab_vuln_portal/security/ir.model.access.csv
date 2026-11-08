@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_lab_portal_note_all,lab.portal.note all,model_lab_portal_note,,1,1,1,1

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_shield_root" name="Shield" sequence="95"
+              web_icon="odoo_shield_warden,static/description/icon.png"
+              groups="odoo_shield_warden.group_shield_user"/>
+
+    <menuitem id="menu_shield_dashboard" name="Dashboard" parent="menu_shield_root"
+              action="action_shield_dashboard" sequence="1"/>
+    <menuitem id="menu_shield_run" name="Run Assessment" parent="menu_shield_root"
+              action="action_shield_run_wizard" sequence="2"
+              groups="odoo_shield_warden.group_shield_manager"/>
+    <menuitem id="menu_shield_findings" name="Findings" parent="menu_shield_root"
+              action="action_shield_findings" sequence="10"/>
+
+    <menuitem id="menu_shield_grc" name="GRC" parent="menu_shield_root" sequence="20"/>
+    <menuitem id="menu_shield_risk_register" name="Risk Register" parent="menu_shield_grc"
+              action="action_shield_risk_register" sequence="1"/>
+    <menuitem id="menu_shield_attestations" name="Attestations" parent="menu_shield_grc"
+              action="action_shield_attestations" sequence="2"/>
+    <menuitem id="menu_shield_frameworks" name="Frameworks" parent="menu_shield_grc"
+              action="action_shield_frameworks" sequence="3"/>
+    <menuitem id="menu_shield_export_log" name="Data Exports" parent="menu_shield_grc"
+              action="action_shield_export_log" sequence="4"/>
+    <menuitem id="menu_shield_deletion_log" name="Deleted Messages" parent="menu_shield_grc"
+              action="action_shield_deletion_log" sequence="5"/>
+    <menuitem id="menu_shield_login_log" name="Login Attempts" parent="menu_shield_grc"
+              action="action_shield_login_log" sequence="6"/>
+
+    <menuitem id="menu_shield_config" name="Configuration" parent="menu_shield_root" sequence="90"
+              groups="odoo_shield_warden.group_shield_manager"/>
+    <menuitem id="menu_shield_controls" name="Controls" parent="menu_shield_config"
+              action="action_shield_controls" sequence="1"/>
+</odoo>

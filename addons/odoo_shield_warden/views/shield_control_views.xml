@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_shield_control_list" model="ir.ui.view">
+        <field name="name">shield.control.list</field>
+        <field name="model">shield.control</field>
+        <field name="arch" type="xml">
+            <list create="false">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="domain"/>
+                <field name="severity"/>
+                <field name="kind"/>
+                <field name="has_fix" string="Fix"/>
+                <field name="framework_refs"/>
+                <field name="active" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shield_control_form" model="ir.ui.view">
+        <field name="name">shield.control.form</field>
+        <field name="model">shield.control</field>
+        <field name="arch" type="xml">
+            <form create="false">
+                <sheet>
+                    <widget name="web_ribbon" title="Disabled" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="code" readonly="1"/>
+                            <field name="domain"/>
+                            <field name="severity"/>
+                        </group>
+                        <group>
+                            <field name="kind" readonly="1"/>
+                            <field name="attestation_validity_days" invisible="kind != 'manual'"/>
+                            <field name="has_fix"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <field name="description"/>
+                            <separator string="Remediation"/>
+                            <field name="remediation"/>
+                        </page>
+                        <page string="Framework mapping">
+                            <field name="requirement_ids">
+                                <list>
+                                    <field name="framework_id"/>
+                                    <field name="ref"/>
+                                    <field name="name"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Attestations" invisible="kind != 'manual'">
+                            <field name="attestation_ids" context="{'default_control_id': id}">
+                                <list>
+                                    <field name="date"/>
+                                    <field name="result"/>
+                                    <field name="valid_until"/>
+                                    <field name="attested_by"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_shield_control_search" model="ir.ui.view">
+        <field name="name">shield.control.search</field>
+        <field name="model">shield.control</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="requirement_ids"/>
+                <filter name="automated" string="Automated" domain="[('kind', '=', 'automated')]"/>
+                <filter name="manual" string="Manual" domain="[('kind', '=', 'manual')]"/>
+                <separator/>
+                <filter name="inactive" string="Disabled" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_domain" string="Domain" context="{'group_by': 'domain'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_shield_controls" model="ir.actions.act_window">
+        <field name="name">Controls</field>
+        <field name="res_model">shield.control</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_domain': 1}</field>
+    </record>
+</odoo>

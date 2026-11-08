@@ -1,0 +1,42 @@
+{
+  "when": "2026-10-31T21:44:44",
+  "tests": {
+    "ok": true,
+    "total": 46,
+    "failed": 0,
+    "errors": 0
+  },
+  "install_ok": true,
+  "detected": [
+    "A1 Silent IBAN swap (tracking disabled) + payment",
+    "A10 Misconfigured third-party module",
+    "A11 Lookalike vendor paid the same day",
+    "A12 Audit trail erased (chatter deleted)",
+    "A13 Invoice PDF made public",
+    "A15 Seals only stored inside Odoo",
+    "A16 Brute force ending in account takeover",
+    "A17 Password spraying",
+    "A18 Insider disables Shield",
+    "A1b Silent IBAN swap after baseline (wave 2)",
+    "A2 Vendor IBAN = employee's own account",
+    "A3 Backdoor scheduled action (code in DB)",
+    "A4 Record rule hiding fraud from auditors",
+    "A5 New account with admin rights",
+    "A6 Brute-force protection disabled",
+    "A7 Mass export of customer data",
+    "A8 Template editor granted to non-admin",
+    "A9 Weak database credentials",
+    "R1 Tracked IBAN swap + self-trust (seeded)",
+    "R2 Bill entered and paid by same user (seeded)",
+    "R3 Duplicate vendor bill (seeded)"
+  ],
+  "missed": [],
+  "prevented": [
+    "Fraudster cannot verify own change",
+    "Payment to swapped IBAN blocked"
+  ],
+  "money_at_risk": 54800.0,
+  "cases": 5,
+  "alerts": 15,
+  "regressions": []
+}

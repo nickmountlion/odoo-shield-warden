@@ -1,0 +1,57 @@
+name: CI
+on:
+  push:
+    branches: [main, "kaizen-*"]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  odoo-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U odoo" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Run module tests (Odoo 18 Community)
+        run: |
+          docker run --rm --network host \
+            -e HOST=127.0.0.1 -e USER=odoo -e PASSWORD=ci-only-password \
+            -v "$PWD/addons:/mnt/extra-addons:ro" \
+            odoo:18.0 odoo \
+            --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons \
+            -d shield_test -i account,odoo_shield_warden --without-demo=all \
+            --test-enable --test-tags /odoo_shield_warden,/odoo_shield_warden_finance \
+            --stop-after-init --http-port=8090 2>&1 | tee odoo-test.log
+          grep "odoo.tests.result" odoo-test.log
+          grep -q "odoo.tests.result.*0 failed, 0 error" odoo-test.log
+
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Python syntax
+        run: python3 -m compileall -q addons lab tools scanner
+      - name: No vendored dependencies or secrets in tree
+        run: |
+          if git ls-files | grep -E '(^|/)node_modules/|\.keystore$|\.env$|\.pem$'; then
+            echo "Tracked file that must not be committed"; exit 1
+          fi

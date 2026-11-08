@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kaizen cycle 3: open gaps G2, G4, G5 and K11 from docs/REAL_WORLD_ASSESSMENT.md. -->
+<odoo noupdate="1">
+    <record id="req_iso_5_33" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.5.33</field><field name="name">Protection of records</field></record>
+    <record id="req_cis_7_3" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">7.3</field><field name="name">Perform automated operating system patch management</field></record>
+    <record id="req_cis_3_3" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">3.3</field><field name="name">Configure data access control lists</field></record>
+
+    <record id="ctl_patch_level" model="shield.control">
+        <field name="code">patch_level</field><field name="sequence">64</field>
+        <field name="name">Odoo build patched</field>
+        <field name="domain">vulnerability</field><field name="severity">high</field>
+        <field name="description">Odoo ships security fixes in its regular builds. Shield reads the build date from the version string and compares it against published advisories for this series and the installed modules.</field>
+        <field name="remediation">Pull the latest build of your series (e.g. docker pull odoo:18.0, or update the source checkout) in a staging-first window, then upgrade modules.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_8'), ref('req_soc_cc7_1'), ref('req_cis_7_1'), ref('req_cis_7_3')])]"/>
+    </record>
+    <record id="ctl_public_attachments" model="shield.control">
+        <field name="code">public_attachments</field><field name="sequence">24</field>
+        <field name="name">No public attachments on business documents</field>
+        <field name="domain">access</field><field name="severity">high</field>
+        <field name="description">Attachments flagged public can be downloaded by anyone who has or guesses the URL, without logging in. Invoices, contracts and employee files should never be public.</field>
+        <field name="remediation">Untick "Is public document" on the listed attachments (Settings > Technical > Attachments) and find the module or user that set it.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_12'), ref('req_iso_5_15'), ref('req_soc_cc6_1'), ref('req_cis_3_3')])]"/>
+    </record>
+    <record id="ctl_message_deletions" model="shield.control">
+        <field name="code">message_deletions</field><field name="sequence">56</field>
+        <field name="name">Audit trail not erased</field>
+        <field name="domain">operations</field><field name="severity">critical</field>
+        <field name="description">Chatter messages hold Odoo's audit trail (who changed an IBAN/CBU, who posted a bill). Shield logs every deletion on audit-relevant records and flags messages removed from records that still exist.</field>
+        <field name="remediation">Ask the user why; restore context from Shield's deletion log and the database backups; review that user's other changes in the same period.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_15'), ref('req_iso_5_33'), ref('req_soc_cc7_2'), ref('req_cis_8_2')])]"/>
+    </record>
+    <record id="ctl_seal_offbox" model="shield.control">
+        <field name="code">seal_offbox</field><field name="sequence">57</field>
+        <field name="name">Evidence seals kept outside Odoo</field>
+        <field name="domain">governance</field><field name="severity">medium</field>
+        <field name="description">The SHA-256 chain proves nobody edited past assessments, but only while the chain itself survives. Emailing each seal to an outside mailbox makes even a full rewrite of the history provable.</field>
+        <field name="remediation">Set the system parameter shield.seal_recipients (comma-separated emails, e.g. your auditor) and configure an outgoing mail server.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_15'), ref('req_iso_5_33'), ref('req_soc_cc7_2')])]"/>
+    </record>
+</odoo>

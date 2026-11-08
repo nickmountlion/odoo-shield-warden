@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Added after the real-world attack lab (docs/REAL_WORLD_ASSESSMENT.md). -->
+<odoo noupdate="1">
+    <record id="ctl_ccm_untracked_bank_change" model="shield.control">
+        <field name="code">ccm_untracked_bank_change</field><field name="sequence">97</field>
+        <field name="name">Bank account changes always leave a trace</field>
+        <field name="domain">finance</field><field name="severity">critical</field>
+        <field name="description">Detects bank details changed while hiding it, using three independent signals: the change appears on the owner's chatter but tracking on the bank account was switched off (tracking_disable via the API); the account was modified with no audit-trail entry at all; or the number no longer matches Shield's own fingerprint from the previous assessment.</field>
+        <field name="remediation">Treat as a suspected fraud attempt: freeze payments to the account, verify it with the vendor on a known phone number, and review what else the same user changed through the API.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('odoo_shield_warden.req_iso_8_15'), ref('odoo_shield_warden.req_iso_8_16'), ref('odoo_shield_warden.req_soc_cc7_2'), ref('odoo_shield_warden.req_cis_8_2')])]"/>
+    </record>
+    <record id="ctl_ccm_shared_bank_account" model="shield.control">
+        <field name="code">ccm_shared_bank_account</field><field name="sequence">98</field>
+        <field name="name">No bank account shared between unrelated contacts</field>
+        <field name="domain">finance</field><field name="severity">high</field>
+        <field name="description">Flags an account number registered on two or more different contacts. A vendor's IBAN/CBU that also sits on an employee's private contact, or on a contact an employee created, is the signature of ghost vendors and payroll or refund diversion.</field>
+        <field name="remediation">Identify the real owner of the account with the bank or vendor; remove it from the contact that should not hold it and review all payments made to it.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('odoo_shield_warden.req_iso_5_3'), ref('odoo_shield_warden.req_iso_8_16'), ref('odoo_shield_warden.req_soc_cc7_2')])]"/>
+    </record>
+</odoo>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Controls added after the real-world attack lab (docs/REAL_WORLD_ASSESSMENT.md). -->
+<odoo noupdate="1">
+    <record id="req_iso_8_12" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.12</field><field name="name">Data leakage prevention</field></record>
+    <record id="req_iso_8_15" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.15</field><field name="name">Logging</field></record>
+    <record id="req_iso_8_28" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.28</field><field name="name">Secure coding</field></record>
+    <record id="req_cis_8_2" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">8.2</field><field name="name">Collect audit logs</field></record>
+    <record id="req_cis_16_1" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">16.1</field><field name="name">Establish and maintain a secure application development process</field></record>
+
+    <record id="ctl_db_code_objects" model="shield.control">
+        <field name="code">db_code_objects</field><field name="sequence">35</field>
+        <field name="name">No unreviewed code stored in the database</field>
+        <field name="domain">platform</field><field name="severity">high</field>
+        <field name="description">Server actions, scheduled actions and automation rules can hold Python that runs with full server access. Code added through the UI or API skips code review and survives module reinstalls, which makes it the classic Odoo persistence backdoor.</field>
+        <field name="remediation">Review each listed action with its author. Move legitimate logic into a version-controlled module and delete the database copy; for anything unexplained, treat the instance as compromised (rotate credentials, review payments since its creation date).</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_9'), ref('req_iso_8_32'), ref('req_soc_cc8_1'), ref('req_soc_cc7_1'), ref('req_cis_2_1')])]"/>
+    </record>
+    <record id="ctl_custom_record_rules" model="shield.control">
+        <field name="code">custom_record_rules</field><field name="sequence">22</field>
+        <field name="name">Record rules come from reviewed modules</field>
+        <field name="domain">access</field><field name="severity">high</field>
+        <field name="description">Record rules decide which rows each group can see. A hand-made rule on payments or journal entries can hide transactions from the controller or auditor while they still exist.</field>
+        <field name="remediation">Confirm each listed rule with its author and the process owner; delete rules nobody can justify and re-run the assessment as the affected role.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_5_15'), ref('req_iso_8_9'), ref('req_soc_cc6_3')])]"/>
+    </record>
+    <record id="ctl_privilege_drift" model="shield.control">
+        <field name="code">privilege_drift</field><field name="sequence">18</field>
+        <field name="name">No unexpected new administrators</field>
+        <field name="domain">identity</field><field name="severity">high</field>
+        <field name="description">Odoo does not log group membership changes. Shield compares administrators against the previous sealed assessment and flags privileged accounts created in the last 30 days.</field>
+        <field name="remediation">Confirm each new administrator with a change ticket; remove rights that were not requested through the change process.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_2'), ref('req_iso_5_18'), ref('req_soc_cc6_2'), ref('req_cis_5_4')])]"/>
+    </record>
+    <record id="ctl_login_throttling" model="shield.control">
+        <field name="code">login_throttling</field><field name="sequence">19</field>
+        <field name="name">Brute-force protection on</field>
+        <field name="domain">identity</field><field name="severity">high</field>
+        <field name="description">Odoo slows down repeated failed logins (also through the XML-RPC and JSON-RPC APIs) unless base.login_cooldown_after is set to 0.</field>
+        <field name="remediation">Delete the system parameter or set base.login_cooldown_after to 5 and base.login_cooldown_duration to 60 or more; add fail2ban or rate limiting at the reverse proxy.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_5'), ref('req_soc_cc6_1'), ref('req_cis_4_1')])]"/>
+    </record>
+    <record id="ctl_template_editors" model="shield.control">
+        <field name="code">template_editors</field><field name="sequence">23</field>
+        <field name="name">Dynamic templates restricted to administrators</field>
+        <field name="domain">access</field><field name="severity">medium</field>
+        <field name="description">Mail Template Editors can write template expressions that the server evaluates. Server-side template injection gave remote code execution in comparable ERPs.</field>
+        <field name="remediation">Remove the hidden "Mail Template Editor" group from non-administrators (Settings > Technical > Groups).</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_2'), ref('req_soc_cc6_3'), ref('req_cis_5_4')])]"/>
+    </record>
+    <record id="ctl_db_credentials" model="shield.control">
+        <field name="code">db_credentials</field><field name="sequence">36</field>
+        <field name="name">Strong, least-privilege database credentials</field>
+        <field name="domain">platform</field><field name="severity">high</field>
+        <field name="description">Anyone who reaches PostgreSQL with Odoo's credentials can read or rewrite any record, bypassing every access rule and audit trail. Default container credentials (odoo/odoo) are widely known.</field>
+        <field name="remediation">Use a long random database password, a dedicated non-superuser role, and never expose port 5432 beyond the Odoo host.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_5_17'), ref('req_iso_8_9'), ref('req_soc_cc6_1'), ref('req_cis_4_7')])]"/>
+    </record>
+    <record id="ctl_mass_export" model="shield.control">
+        <field name="code">mass_export</field><field name="sequence">55</field>
+        <field name="name">No bulk exports of sensitive data</field>
+        <field name="domain">operations</field><field name="severity">high</field>
+        <field name="description">Odoo does not record exports. Shield logs every export and flags users who exported more than 500 sensitive records (customers, bank accounts, invoices, employees...) in 30 days, the typical pattern before a departing employee joins a competitor.</field>
+        <field name="remediation">Confirm the business reason with the user's manager. Limit "Access to export feature" to roles that need it.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_12'), ref('req_iso_8_16'), ref('req_soc_cc7_2')])]"/>
+    </record>
+    <record id="ctl_custom_code_risks" model="shield.control">
+        <field name="code">custom_code_risks</field><field name="sequence">63</field>
+        <field name="name">Third-party code free of risky patterns</field>
+        <field name="domain">vulnerability</field><field name="severity">high</field>
+        <field name="description">Static review of installed non-Odoo modules for the most common Odoo-specific flaws: SQL built from strings, eval/exec, OS commands, public routes using sudo(), CSRF disabled, unsanitized HTML, t-raw.</field>
+        <field name="remediation">Have the module author fix each finding or replace the module; pattern matches need human confirmation.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_28'), ref('req_iso_8_8'), ref('req_soc_cc7_1'), ref('req_cis_16_1')])]"/>
+    </record>
+</odoo>

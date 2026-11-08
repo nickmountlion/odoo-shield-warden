@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kaizen cycle 3: prevention and vendor-master fraud (docs/REAL_WORLD_ASSESSMENT.md, roadmap 2 and 8). -->
+<odoo noupdate="1">
+    <record id="ctl_payment_hold" model="shield.control">
+        <field name="code">payment_hold</field><field name="sequence">89</field>
+        <field name="name">Payments to new bank details are held</field>
+        <field name="domain">finance</field><field name="severity">critical</field>
+        <field name="description">Detection after the money left is too late. With the payment hold on, Odoo refuses to post a payment to a bank account whose number was set in the last 30 days, or that Shield flagged, until someone other than the person who set the number verifies it.</field>
+        <field name="remediation">Apply the one-click fix, then brief AP: when a payment is held, a colleague calls the vendor on a number you already had and clicks "Verify with Shield" on the bank account.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('odoo_shield_warden.req_iso_5_3'), ref('odoo_shield_warden.req_soc_cc6_3'), ref('odoo_shield_warden.req_soc_cc8_1')])]"/>
+    </record>
+    <record id="ctl_ccm_lookalike_vendor" model="shield.control">
+        <field name="code">ccm_lookalike_vendor</field><field name="sequence">99</field>
+        <field name="name">No lookalike vendors</field>
+        <field name="domain">finance</field><field name="severity">high</field>
+        <field name="description">Flags vendors created in the last 12 months whose name imitates an existing vendor ("N0rthwind Logistics Ltd" vs "Northwind Logistics"): the classic fake-vendor and invoice-redirection set-up.</field>
+        <field name="remediation">Confirm the new vendor's registration number and bank with the real company; archive it if it is a duplicate or fake.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('odoo_shield_warden.req_iso_8_16'), ref('odoo_shield_warden.req_soc_cc7_2')])]"/>
+    </record>
+    <record id="ctl_ccm_new_vendor_fast_payment" model="shield.control">
+        <field name="code">ccm_new_vendor_fast_payment</field><field name="sequence">100</field>
+        <field name="name">New vendors not paid at once by their creator</field>
+        <field name="domain">finance</field><field name="severity">high</field>
+        <field name="description">Flags payments made within 7 days of the vendor being created, by the same person who created the vendor or its bank account.</field>
+        <field name="remediation">Check the purchase order, delivery and contract behind the payment; require vendor creation and payment to be done by different people.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('odoo_shield_warden.req_iso_5_3'), ref('odoo_shield_warden.req_iso_8_16'), ref('odoo_shield_warden.req_soc_cc7_2')])]"/>
+    </record>
+</odoo>

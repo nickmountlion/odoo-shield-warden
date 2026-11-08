@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_shield_export_log_list" model="ir.ui.view">
+        <field name="name">shield.export.log.list</field>
+        <field name="model">shield.export.log</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false">
+                <field name="create_date" string="When"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="model"/>
+                <field name="record_count" sum="Records"/>
+                <field name="exported_fields" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shield_export_log_search" model="ir.ui.view">
+        <field name="name">shield.export.log.search</field>
+        <field name="model">shield.export.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="user_id"/>
+                <field name="model"/>
+                <group>
+                    <filter name="group_user" string="User" context="{'group_by': 'user_id'}"/>
+                    <filter name="group_model" string="Model" context="{'group_by': 'model'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_shield_export_log" model="ir.actions.act_window">
+        <field name="name">Data Exports</field>
+        <field name="res_model">shield.export.log</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No exports recorded yet</p>
+            <p>Every export from Odoo's list views or the API is recorded here.</p>
+        </field>
+    </record>
+</odoo>

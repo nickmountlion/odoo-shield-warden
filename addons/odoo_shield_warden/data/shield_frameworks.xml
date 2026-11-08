@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Requirement mappings are guidance for evidence collection, not a certification. -->
+<odoo noupdate="1">
+    <record id="fw_iso27001" model="shield.framework">
+        <field name="name">ISO/IEC 27001:2022 Annex A</field>
+        <field name="code">ISO27001</field>
+        <field name="version">2022</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="fw_soc2" model="shield.framework">
+        <field name="name">SOC 2 Trust Services Criteria</field>
+        <field name="code">SOC2</field>
+        <field name="version">2017 (rev. 2022)</field>
+        <field name="sequence">2</field>
+    </record>
+    <record id="fw_cis" model="shield.framework">
+        <field name="name">CIS Critical Security Controls</field>
+        <field name="code">CIS</field>
+        <field name="version">v8</field>
+        <field name="sequence">3</field>
+    </record>
+
+    <!-- ISO/IEC 27001:2022 -->
+    <record id="req_iso_5_3" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.5.3</field><field name="name">Segregation of duties</field></record>
+    <record id="req_iso_5_15" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.5.15</field><field name="name">Access control</field></record>
+    <record id="req_iso_5_17" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.5.17</field><field name="name">Authentication information</field></record>
+    <record id="req_iso_5_18" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.5.18</field><field name="name">Access rights</field></record>
+    <record id="req_iso_5_24" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.5.24</field><field name="name">Incident management planning and preparation</field></record>
+    <record id="req_iso_8_2" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.2</field><field name="name">Privileged access rights</field></record>
+    <record id="req_iso_8_5" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.5</field><field name="name">Secure authentication</field></record>
+    <record id="req_iso_8_6" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.6</field><field name="name">Capacity management</field></record>
+    <record id="req_iso_8_8" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.8</field><field name="name">Management of technical vulnerabilities</field></record>
+    <record id="req_iso_8_9" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.9</field><field name="name">Configuration management</field></record>
+    <record id="req_iso_8_13" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.13</field><field name="name">Information backup</field></record>
+    <record id="req_iso_8_16" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.16</field><field name="name">Monitoring activities</field></record>
+    <record id="req_iso_8_24" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.24</field><field name="name">Use of cryptography</field></record>
+    <record id="req_iso_8_31" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.31</field><field name="name">Separation of development, test and production environments</field></record>
+    <record id="req_iso_8_32" model="shield.requirement"><field name="framework_id" ref="fw_iso27001"/><field name="ref">A.8.32</field><field name="name">Change management</field></record>
+
+    <!-- SOC 2 -->
+    <record id="req_soc_cc6_1" model="shield.requirement"><field name="framework_id" ref="fw_soc2"/><field name="ref">CC6.1</field><field name="name">Logical access security</field></record>
+    <record id="req_soc_cc6_2" model="shield.requirement"><field name="framework_id" ref="fw_soc2"/><field name="ref">CC6.2</field><field name="name">User registration and authorization</field></record>
+    <record id="req_soc_cc6_3" model="shield.requirement"><field name="framework_id" ref="fw_soc2"/><field name="ref">CC6.3</field><field name="name">Role-based access and least privilege</field></record>
+    <record id="req_soc_cc6_6" model="shield.requirement"><field name="framework_id" ref="fw_soc2"/><field name="ref">CC6.6</field><field name="name">Protection against external threats</field></record>
+    <record id="req_soc_cc6_7" model="shield.requirement"><field name="framework_id" ref="fw_soc2"/><field name="ref">CC6.7</field><field name="name">Restriction of data transmission</field></record>
+    <record id="req_soc_cc7_1" model="shield.requirement"><field name="framework_id" ref="fw_soc2"/><field name="ref">CC7.1</field><field name="name">Detection of configuration changes and vulnerabilities</field></record>
+    <record id="req_soc_cc7_2" model="shield.requirement"><field name="framework_id" ref="fw_soc2"/><field name="ref">CC7.2</field><field name="name">Monitoring of system components</field></record>
+    <record id="req_soc_cc7_4" model="shield.requirement"><field name="framework_id" ref="fw_soc2"/><field name="ref">CC7.4</field><field name="name">Incident response</field></record>
+    <record id="req_soc_cc8_1" model="shield.requirement"><field name="framework_id" ref="fw_soc2"/><field name="ref">CC8.1</field><field name="name">Change management</field></record>
+    <record id="req_soc_a1_2" model="shield.requirement"><field name="framework_id" ref="fw_soc2"/><field name="ref">A1.2</field><field name="name">Backup and recovery infrastructure</field></record>
+    <record id="req_soc_a1_3" model="shield.requirement"><field name="framework_id" ref="fw_soc2"/><field name="ref">A1.3</field><field name="name">Recovery plan testing</field></record>
+
+    <!-- CIS Controls v8 -->
+    <record id="req_cis_2_1" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">2.1</field><field name="name">Establish and maintain a software inventory</field></record>
+    <record id="req_cis_3_10" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">3.10</field><field name="name">Encrypt sensitive data in transit</field></record>
+    <record id="req_cis_4_1" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">4.1</field><field name="name">Establish and maintain a secure configuration process</field></record>
+    <record id="req_cis_4_7" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">4.7</field><field name="name">Manage default accounts</field></record>
+    <record id="req_cis_5_1" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">5.1</field><field name="name">Establish and maintain an inventory of accounts</field></record>
+    <record id="req_cis_5_2" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">5.2</field><field name="name">Use unique passwords</field></record>
+    <record id="req_cis_5_3" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">5.3</field><field name="name">Disable dormant accounts</field></record>
+    <record id="req_cis_5_4" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">5.4</field><field name="name">Restrict administrator privileges</field></record>
+    <record id="req_cis_6_3" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">6.3</field><field name="name">Require MFA for externally-exposed applications</field></record>
+    <record id="req_cis_6_5" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">6.5</field><field name="name">Require MFA for administrative access</field></record>
+    <record id="req_cis_7_1" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">7.1</field><field name="name">Establish and maintain a vulnerability management process</field></record>
+    <record id="req_cis_11_2" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">11.2</field><field name="name">Perform automated backups</field></record>
+    <record id="req_cis_11_5" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">11.5</field><field name="name">Test data recovery</field></record>
+    <record id="req_cis_17_4" model="shield.requirement"><field name="framework_id" ref="fw_cis"/><field name="ref">17.4</field><field name="name">Establish and maintain an incident response process</field></record>
+
+    <record id="param_latest_odoo_major" model="ir.config_parameter">
+        <field name="key">shield.latest_odoo_major</field>
+        <field name="value">19</field>
+    </record>
+</odoo>

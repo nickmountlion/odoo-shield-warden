@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Identity & Authentication -->
+    <record id="ctl_admin_default_login" model="shield.control">
+        <field name="code">admin_default_login</field><field name="sequence">10</field>
+        <field name="name">No default 'admin' account</field>
+        <field name="domain">identity</field><field name="severity">high</field>
+        <field name="description">The built-in administrator keeps the login 'admin' on most installs, which gives attackers half of the credential.</field>
+        <field name="remediation">Change the administrator login to a named email address, set a long unique password and enable 2FA (Settings > Users).</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_5_17'), ref('req_iso_8_5'), ref('req_soc_cc6_1'), ref('req_cis_4_7')])]"/>
+    </record>
+    <record id="ctl_admin_count" model="shield.control">
+        <field name="code">admin_count</field><field name="sequence">11</field>
+        <field name="name">Limited Settings administrators</field>
+        <field name="domain">identity</field><field name="severity">high</field>
+        <field name="description">Settings/Administration bypasses all access rules, so it should belong to very few named people.</field>
+        <field name="remediation">Remove the Administration > Settings right from users who do not administer the system; use functional manager roles instead.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_2'), ref('req_soc_cc6_3'), ref('req_cis_5_4')])]"/>
+    </record>
+    <record id="ctl_mfa_coverage" model="shield.control">
+        <field name="code">mfa_coverage</field><field name="sequence">12</field>
+        <field name="name">Two-factor authentication in use</field>
+        <field name="domain">identity</field><field name="severity">high</field>
+        <field name="description">Internal users, and administrators above all, should authenticate with a second factor.</field>
+        <field name="remediation">Ask each user to enable two-factor authentication under My Profile > Account Security, starting with administrators.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_5'), ref('req_soc_cc6_1'), ref('req_cis_6_3'), ref('req_cis_6_5')])]"/>
+    </record>
+    <record id="ctl_mfa_enforced" model="shield.control">
+        <field name="code">mfa_enforced</field><field name="sequence">13</field>
+        <field name="name">Two-factor authentication enforced</field>
+        <field name="domain">identity</field><field name="severity">high</field>
+        <field name="description">Optional 2FA leaves most accounts protected by a password only.</field>
+        <field name="remediation">Install "2FA by mail" (auth_totp_mail_enforce) and require 2FA for employees. Needs a working outgoing mail server.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_5'), ref('req_iso_5_17'), ref('req_soc_cc6_1'), ref('req_cis_6_3')])]"/>
+    </record>
+    <record id="ctl_password_policy" model="shield.control">
+        <field name="code">password_policy</field><field name="sequence">14</field>
+        <field name="name">Password length policy</field>
+        <field name="domain">identity</field><field name="severity">medium</field>
+        <field name="description">Odoo accepts short passwords unless a minimum length is configured.</field>
+        <field name="remediation">Install Password Policy (auth_password_policy) and set the minimum length to 12 or more.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_5_17'), ref('req_soc_cc6_1'), ref('req_cis_5_2')])]"/>
+    </record>
+    <record id="ctl_dormant_users" model="shield.control">
+        <field name="code">dormant_users</field><field name="sequence">15</field>
+        <field name="name">No dormant internal accounts</field>
+        <field name="domain">identity</field><field name="severity">medium</field>
+        <field name="description">Accounts unused for 90 days belong to leavers or forgotten integrations and are prime takeover targets.</field>
+        <field name="remediation">Archive accounts that are no longer needed. The one-click fix archives them (reversible).</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_5_18'), ref('req_soc_cc6_2'), ref('req_cis_5_3')])]"/>
+    </record>
+    <record id="ctl_signup_open" model="shield.control">
+        <field name="code">signup_open</field><field name="sequence">16</field>
+        <field name="name">No free self sign-up</field>
+        <field name="domain">identity</field><field name="severity">medium</field>
+        <field name="description">Free sign-up lets anyone on the internet create a portal account and reach portal-exposed data.</field>
+        <field name="remediation">Settings > General Settings > Customer Account: set to "On invitation".</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_5_15'), ref('req_iso_5_18'), ref('req_soc_cc6_2')])]"/>
+    </record>
+    <record id="ctl_api_keys" model="shield.control">
+        <field name="code">api_keys</field><field name="sequence">17</field>
+        <field name="name">API keys owned and rotated</field>
+        <field name="domain">identity</field><field name="severity">low</field>
+        <field name="description">API keys never expire by default and act with the full rights of their user.</field>
+        <field name="remediation">Revoke keys of archived users and rotate keys older than 180 days; use a dedicated low-privilege user per integration.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_5_17'), ref('req_iso_5_18'), ref('req_soc_cc6_1'), ref('req_cis_5_1')])]"/>
+    </record>
+
+    <!-- Access Control -->
+    <record id="ctl_custom_module_acl" model="shield.control">
+        <field name="code">custom_module_acl</field><field name="sequence">20</field>
+        <field name="name">Custom modules restrict write access</field>
+        <field name="domain">access</field><field name="severity">medium</field>
+        <field name="description">Access rules without a group apply to every user, including portal users, and are a common mistake in custom modules.</field>
+        <field name="remediation">Give each ir.model.access line in custom modules a group and grant write/delete only to the roles that need it.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_5_15'), ref('req_iso_8_9'), ref('req_soc_cc6_3')])]"/>
+    </record>
+    <record id="ctl_accounting_admins" model="shield.control">
+        <field name="code">accounting_admins</field><field name="sequence">21</field>
+        <field name="name">Segregation of duties in accounting</field>
+        <field name="domain">access</field><field name="severity">medium</field>
+        <field name="description">Accounting administrators can create vendors, post bills and register payments alone.</field>
+        <field name="remediation">Keep accounting administrators to two people and split bill creation from payment approval.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_5_3'), ref('req_iso_8_2'), ref('req_soc_cc6_3')])]"/>
+    </record>
+
+    <!-- Platform configuration -->
+    <record id="ctl_dbmanager_exposed" model="shield.control">
+        <field name="code">dbmanager_exposed</field><field name="sequence">30</field>
+        <field name="name">Database manager disabled</field>
+        <field name="domain">platform</field><field name="severity">high</field>
+        <field name="description">/web/database/manager can back up, restore and drop every database with the master password.</field>
+        <field name="remediation">Set list_db = False in odoo.conf and block /web/database/* at the reverse proxy.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_9'), ref('req_iso_8_2'), ref('req_soc_cc6_6'), ref('req_cis_4_1')])]"/>
+    </record>
+    <record id="ctl_master_password" model="shield.control">
+        <field name="code">master_password</field><field name="sequence">31</field>
+        <field name="name">Strong, hashed master password</field>
+        <field name="domain">platform</field><field name="severity">high</field>
+        <field name="description">The master password (admin_passwd) controls database creation, backup and deletion.</field>
+        <field name="remediation">Set a long random admin_passwd via the database manager once (Odoo stores it hashed), then disable list_db.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_5_17'), ref('req_iso_8_2'), ref('req_soc_cc6_1'), ref('req_cis_4_7')])]"/>
+    </record>
+    <record id="ctl_dev_mode" model="shield.control">
+        <field name="code">dev_mode</field><field name="sequence">32</field>
+        <field name="name">Developer mode off in production</field>
+        <field name="domain">platform</field><field name="severity">high</field>
+        <field name="description">Server-wide dev_mode reloads code from disk and returns detailed tracebacks.</field>
+        <field name="remediation">Remove dev_mode from the production configuration and command line.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_9'), ref('req_iso_8_31'), ref('req_soc_cc8_1'), ref('req_cis_4_1')])]"/>
+    </record>
+    <record id="ctl_workers" model="shield.control">
+        <field name="code">workers</field><field name="sequence">33</field>
+        <field name="name">Multi-process mode with limits</field>
+        <field name="domain">platform</field><field name="severity">medium</field>
+        <field name="description">Without workers there are no per-request memory/time limits, so a single request can take Odoo down.</field>
+        <field name="remediation">Set workers = 2 x CPU + 1 and tune limit_memory_soft/hard and limit_time_cpu/real.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_6'), ref('req_cis_4_1')])]"/>
+    </record>
+    <record id="ctl_dbfilter" model="shield.control">
+        <field name="code">dbfilter</field><field name="sequence">34</field>
+        <field name="name">Database selection restricted</field>
+        <field name="domain">platform</field><field name="severity">low</field>
+        <field name="description">Without dbfilter, any database on the server can be targeted by URL.</field>
+        <field name="remediation">Set dbfilter = ^%d$ (or the database name) in odoo.conf.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_9'), ref('req_cis_4_1')])]"/>
+    </record>
+
+    <!-- Encryption in transit -->
+    <record id="ctl_https_base_url" model="shield.control">
+        <field name="code">https_base_url</field><field name="sequence">40</field>
+        <field name="name">HTTPS everywhere</field>
+        <field name="domain">crypto</field><field name="severity">high</field>
+        <field name="description">Plain HTTP exposes passwords and session cookies on the network.</field>
+        <field name="remediation">Serve Odoo behind a TLS reverse proxy, enable proxy_mode and set web.base.url to the https address.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_24'), ref('req_soc_cc6_7'), ref('req_cis_3_10')])]"/>
+    </record>
+    <record id="ctl_mail_server_tls" model="shield.control">
+        <field name="code">mail_server_tls</field><field name="sequence">41</field>
+        <field name="name">Outgoing mail uses TLS</field>
+        <field name="domain">crypto</field><field name="severity">medium</field>
+        <field name="description">Invoices and password-reset links travel through the outgoing mail server.</field>
+        <field name="remediation">Set each outgoing mail server to STARTTLS or SSL/TLS.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_24'), ref('req_soc_cc6_7'), ref('req_cis_3_10')])]"/>
+    </record>
+
+    <!-- Monitoring & Operations -->
+    <record id="ctl_cron_failures" model="shield.control">
+        <field name="code">cron_failures</field><field name="sequence">50</field>
+        <field name="name">Scheduled actions healthy</field>
+        <field name="domain">operations</field><field name="severity">medium</field>
+        <field name="description">Failing scheduled actions silently stop reconciliations, reminders and integrations.</field>
+        <field name="remediation">Check the server log for each failing scheduled action and fix or disable it.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_16'), ref('req_soc_cc7_2')])]"/>
+    </record>
+    <record id="ctl_mail_queue" model="shield.control">
+        <field name="code">mail_queue</field><field name="sequence">51</field>
+        <field name="name">Outgoing email delivered</field>
+        <field name="domain">operations</field><field name="severity">low</field>
+        <field name="description">Emails stuck in exception mean customers and staff miss documents and alerts.</field>
+        <field name="remediation">Review Settings > Technical > Emails filtered on "Delivery failed".</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_16'), ref('req_soc_cc7_2')])]"/>
+    </record>
+
+    <!-- Vulnerability management -->
+    <record id="ctl_version_support" model="shield.control">
+        <field name="code">version_support</field><field name="sequence">60</field>
+        <field name="name">Supported Odoo version</field>
+        <field name="domain">vulnerability</field><field name="severity">high</field>
+        <field name="description">Odoo publishes security fixes only for the three most recent major versions.</field>
+        <field name="remediation">Plan the next major upgrade with a staging dry-run; keep within the supported window.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_8'), ref('req_soc_cc7_1'), ref('req_cis_7_1')])]"/>
+    </record>
+    <record id="ctl_pending_module_upgrades" model="shield.control">
+        <field name="code">pending_module_upgrades</field><field name="sequence">61</field>
+        <field name="name">Module code and database in sync</field>
+        <field name="domain">vulnerability</field><field name="severity">medium</field>
+        <field name="description">Code deployed without upgrading the module leaves data, views and security rules out of date.</field>
+        <field name="remediation">Upgrade the listed modules (Apps > Upgrade, or odoo -u) in a staging-first window.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_32'), ref('req_iso_8_8'), ref('req_soc_cc8_1')])]"/>
+    </record>
+    <record id="ctl_third_party_modules" model="shield.control">
+        <field name="code">third_party_modules</field><field name="sequence">62</field>
+        <field name="name">Third-party modules reviewed</field>
+        <field name="domain">vulnerability</field><field name="severity">low</field>
+        <field name="description">Community and custom modules are not covered by Odoo's security process.</field>
+        <field name="remediation">Keep an inventory with owner and source for each module, review code before install and test it on every upgrade.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_8'), ref('req_soc_cc7_1'), ref('req_cis_2_1'), ref('req_cis_7_1')])]"/>
+    </record>
+
+    <!-- Backup & Resilience (manual) -->
+    <record id="ctl_backup_offsite" model="shield.control">
+        <field name="code">backup_offsite</field><field name="sequence">70</field>
+        <field name="name">Automated off-site backups</field>
+        <field name="domain">resilience</field><field name="severity">critical</field><field name="kind">manual</field>
+        <field name="attestation_validity_days">90</field>
+        <field name="description">Database and filestore are backed up automatically to storage outside the production host.</field>
+        <field name="remediation">Schedule nightly pg_dump plus filestore archives to off-host storage with retention; attach the job configuration as evidence.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_13'), ref('req_soc_a1_2'), ref('req_cis_11_2')])]"/>
+    </record>
+    <record id="ctl_restore_tested" model="shield.control">
+        <field name="code">restore_tested</field><field name="sequence">71</field>
+        <field name="name">Restore tested in the last 90 days</field>
+        <field name="domain">resilience</field><field name="severity">high</field><field name="kind">manual</field>
+        <field name="attestation_validity_days">90</field>
+        <field name="description">A backup copy was restored to a scratch environment and verified (row counts, filestore, login).</field>
+        <field name="remediation">Restore the latest backup to staging, compare record counts and filestore checksums, record the recovery time.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_13'), ref('req_soc_a1_3'), ref('req_cis_11_5')])]"/>
+    </record>
+    <record id="ctl_staging_env" model="shield.control">
+        <field name="code">staging_env</field><field name="sequence">72</field>
+        <field name="name">Separate staging environment</field>
+        <field name="domain">resilience</field><field name="severity">medium</field><field name="kind">manual</field>
+        <field name="attestation_validity_days">365</field>
+        <field name="description">Changes and upgrades are tested outside production on a recent, anonymized copy.</field>
+        <field name="remediation">Run a staging instance refreshed monthly from production with personal data anonymized.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_31'), ref('req_soc_cc8_1')])]"/>
+    </record>
+
+    <!-- Governance (manual) -->
+    <record id="ctl_access_review" model="shield.control">
+        <field name="code">access_review</field><field name="sequence">80</field>
+        <field name="name">Quarterly user access review</field>
+        <field name="domain">governance</field><field name="severity">high</field><field name="kind">manual</field>
+        <field name="attestation_validity_days">90</field>
+        <field name="description">A manager reviewed every internal user and their groups and removed what is not needed.</field>
+        <field name="remediation">Export Settings > Users with groups, have each department head confirm it, and attach the signed export.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_5_18'), ref('req_soc_cc6_2'), ref('req_soc_cc6_3'), ref('req_cis_5_1')])]"/>
+    </record>
+    <record id="ctl_change_mgmt" model="shield.control">
+        <field name="code">change_mgmt</field><field name="sequence">81</field>
+        <field name="name">Production change process</field>
+        <field name="domain">governance</field><field name="severity">medium</field><field name="kind">manual</field>
+        <field name="attestation_validity_days">365</field>
+        <field name="description">Production changes are approved in writing, tested in staging first and have a rollback plan.</field>
+        <field name="remediation">Document the change process and keep approvals (tickets) for module installs, upgrades and configuration changes.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_32'), ref('req_soc_cc8_1')])]"/>
+    </record>
+    <record id="ctl_incident_response" model="shield.control">
+        <field name="code">incident_response</field><field name="sequence">82</field>
+        <field name="name">Incident response plan</field>
+        <field name="domain">governance</field><field name="severity">medium</field><field name="kind">manual</field>
+        <field name="attestation_validity_days">365</field>
+        <field name="description">A tested plan defines who acts when Odoo is breached or unavailable, including credential rotation and restore steps.</field>
+        <field name="remediation">Write a one-page plan (contacts, decision rights, restore and rotation steps) and rehearse it yearly.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_5_24'), ref('req_soc_cc7_4'), ref('req_cis_17_4')])]"/>
+    </record>
+    <record id="ctl_cve_feed" model="shield.control">
+        <field name="code">cve_feed</field><field name="sequence">65</field>
+        <field name="name">No known security advisory applies to this build</field>
+        <field name="domain">vulnerability</field><field name="severity">high</field>
+        <field name="description">Shield ships an offline list of published Odoo security advisories (data/advisories.json, each with a source URL) and compares the running series, build date and installed modules against it. It also warns when the list is stale or has not been reviewed for this series, because then a clean result proves little. No network calls are made.</field>
+        <field name="remediation">Update to the latest build of your series in a staging-first window, then upgrade modules. If the warning is about stale data, update the Shield module or add advisories offline in the system parameter shield.advisory_extra.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('req_iso_8_8'), ref('req_soc_cc7_1'), ref('req_cis_7_1')])]"/>
+    </record>
+</odoo>

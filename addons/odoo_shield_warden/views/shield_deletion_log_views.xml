@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_shield_deletion_log_list" model="ir.ui.view">
+        <field name="name">shield.deletion.log.list</field>
+        <field name="model">shield.deletion.log</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" decoration-danger="record_still_exists">
+                <field name="create_date" string="Deleted on"/>
+                <field name="deleted_by" widget="many2one_avatar_user"/>
+                <field name="res_model"/>
+                <field name="res_id"/>
+                <field name="summary"/>
+                <field name="message_author" optional="hide"/>
+                <field name="message_date" optional="hide"/>
+                <field name="had_tracking"/>
+                <field name="record_still_exists"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_shield_deletion_log" model="ir.actions.act_window">
+        <field name="name">Deleted Messages</field>
+        <field name="res_model">shield.deletion.log</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No audit-trail messages deleted</p>
+            <p>Deleting a chatter message on a partner, bank account, invoice, payment, employee or user is recorded here.</p>
+        </field>
+    </record>
+</odoo>

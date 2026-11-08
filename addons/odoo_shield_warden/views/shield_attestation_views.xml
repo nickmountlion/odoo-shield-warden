@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_shield_attestation_list" model="ir.ui.view">
+        <field name="name">shield.attestation.list</field>
+        <field name="model">shield.attestation</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="result == 'non_compliant'">
+                <field name="date"/>
+                <field name="control_id"/>
+                <field name="result" widget="badge" decoration-success="result == 'compliant'"
+                       decoration-danger="result == 'non_compliant'"/>
+                <field name="valid_until"/>
+                <field name="attested_by" widget="many2one_avatar_user"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shield_attestation_form" model="ir.ui.view">
+        <field name="name">shield.attestation.form</field>
+        <field name="model">shield.attestation</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="control_id" options="{'no_create': True}"/>
+                            <field name="result"/>
+                            <field name="attested_by" widget="many2one_avatar_user"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="valid_until"/>
+                        </group>
+                    </group>
+                    <label for="evidence"/>
+                    <field name="evidence" placeholder="What was verified, how, by whom, and where the evidence is stored."/>
+                    <field name="attachment_ids" widget="many2many_binary"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_shield_attestations" model="ir.actions.act_window">
+        <field name="name">Attestations</field>
+        <field name="res_model">shield.attestation</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Record evidence for manual controls</p>
+            <p>Backups, restore tests, access reviews and incident response cannot be verified from inside Odoo.
+               Attest them here with evidence; they expire and must be renewed.</p>
+        </field>
+    </record>
+</odoo>

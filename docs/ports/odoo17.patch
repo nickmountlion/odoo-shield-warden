@@ -1,0 +1,2927 @@
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden/__manifest__.py odoo-shield-warden-port/v17/addons/odoo_shield_warden/__manifest__.py
+--- odoo-shield-warden/addons/odoo_shield_warden/__manifest__.py	2026-10-30 16:54:41.320349900 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden/__manifest__.py	2026-11-05 18:07:51.895268100 -0300
+@@ -1,40 +1,40 @@
+-{
+-    "name": "Odoo Shield Warden: Security & GRC",
+-    "summary": "Assess, harden and evidence the security of your Odoo against ISO 27001, SOC 2 and CIS Controls",
+-    "description": """
+-Continuous security assessment for Odoo Enterprise and Community (self-hosted and Odoo.sh).
+-
+-* Automated checks: authentication, privileged access, platform configuration, encryption in transit, monitoring, vulnerability and upgrade posture.
+-* Manual controls with evidence-backed attestations (backups, restore tests, access reviews, incident response, change management).
+-* Findings register with owners, due dates, risk acceptance with expiry, automatic resolution and regression detection.
+-* One-click hardening for safe fixes, logged in the chatter.
+-* Security Score and GRC compliance per framework, with a PDF scorecard.
+-""",
+-    "version": "18.0.1.3.0",
+-    "category": "Productivity/Security",
+-    "author": "Odoo Shield Warden",
+-    "license": "OPL-1",
+-    "depends": ["base", "mail", "web"],
+-    "data": [
+-        "security/shield_groups.xml",
+-        "security/ir.model.access.csv",
+-        "data/shield_frameworks.xml",
+-        "data/shield_controls.xml",
+-        "data/shield_controls_threats.xml",
+-        "data/shield_controls_cycle3.xml",
+-        "data/shield_controls_cycle4.xml",
+-        "data/shield_cron.xml",
+-        "views/shield_assessment_views.xml",
+-        "views/shield_finding_views.xml",
+-        "views/shield_control_views.xml",
+-        "views/shield_attestation_views.xml",
+-        "views/shield_framework_views.xml",
+-        "views/shield_export_log_views.xml",
+-        "views/shield_deletion_log_views.xml",
+-        "views/shield_login_log_views.xml",
+-        "report/shield_report.xml",
+-        "views/shield_menus.xml",
+-    ],
+-    "application": True,
+-    "installable": True,
+-}
++{
++    "name": "Odoo Shield Warden: Security & GRC",
++    "summary": "Assess, harden and evidence the security of your Odoo against ISO 27001, SOC 2 and CIS Controls",
++    "description": """
++Continuous security assessment for Odoo Enterprise and Community (self-hosted and Odoo.sh).
++
++* Automated checks: authentication, privileged access, platform configuration, encryption in transit, monitoring, vulnerability and upgrade posture.
++* Manual controls with evidence-backed attestations (backups, restore tests, access reviews, incident response, change management).
++* Findings register with owners, due dates, risk acceptance with expiry, automatic resolution and regression detection.
++* One-click hardening for safe fixes, logged in the chatter.
++* Security Score and GRC compliance per framework, with a PDF scorecard.
++""",
++    "version": "17.0.1.3.0",
++    "category": "Productivity/Security",
++    "author": "Odoo Shield Warden",
++    "license": "OPL-1",
++    "depends": ["base", "mail", "web"],
++    "data": [
++        "security/shield_groups.xml",
++        "security/ir.model.access.csv",
++        "data/shield_frameworks.xml",
++        "data/shield_controls.xml",
++        "data/shield_controls_threats.xml",
++        "data/shield_controls_cycle3.xml",
++        "data/shield_controls_cycle4.xml",
++        "data/shield_cron.xml",
++        "views/shield_assessment_views.xml",
++        "views/shield_finding_views.xml",
++        "views/shield_control_views.xml",
++        "views/shield_attestation_views.xml",
++        "views/shield_framework_views.xml",
++        "views/shield_export_log_views.xml",
++        "views/shield_deletion_log_views.xml",
++        "views/shield_login_log_views.xml",
++        "report/shield_report.xml",
++        "views/shield_menus.xml",
++    ],
++    "application": True,
++    "installable": True,
++}
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden/models/shield_assessment.py odoo-shield-warden-port/v17/addons/odoo_shield_warden/models/shield_assessment.py
+--- odoo-shield-warden/addons/odoo_shield_warden/models/shield_assessment.py	2026-11-03 20:31:41.906347800 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden/models/shield_assessment.py	2026-11-05 18:23:41.568072100 -0300
+@@ -20,7 +20,7 @@
+ 
+ 
+ def _sealed_error(env):
+-    return UserError(env._("Sealed assessments are evidence and cannot be changed or deleted."))
++    return UserError(_("Sealed assessments are evidence and cannot be changed or deleted."))
+ 
+ 
+ def _is_uninstall(env):
+@@ -45,9 +45,9 @@
+     edition = fields.Char(readonly=True)
+     result_ids = fields.One2many("shield.assessment.result", "assessment_id", string="Results")
+     framework_score_ids = fields.One2many("shield.framework.score", "assessment_id", string="Framework compliance")
+-    security_score = fields.Float(readonly=True, aggregator="avg",
++    security_score = fields.Float(readonly=True, group_operator="avg",
+                                   help="Severity-weighted share of passing controls. Accepted risks count as failing.")
+-    grc_score = fields.Float(string="GRC compliance", readonly=True, aggregator="avg",
++    grc_score = fields.Float(string="GRC compliance", readonly=True, group_operator="avg",
+                              help="Average share of satisfied framework requirements. Valid risk acceptances count.")
+     grade = fields.Char(readonly=True)
+     pass_count = fields.Integer(readonly=True)
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden/models/shield_check.py odoo-shield-warden-port/v17/addons/odoo_shield_warden/models/shield_check.py
+--- odoo-shield-warden/addons/odoo_shield_warden/models/shield_check.py	2026-10-30 15:53:50.429731800 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden/models/shield_check.py	2026-11-05 18:23:41.628694800 -0300
+@@ -1,355 +1,357 @@
+-"""Check and fix implementations.
+-
+-Every automated control with code X is evaluated by ``_check_X`` and may offer a
+-one-click hardening via ``_fix_X``. Checks are read-only and return a dict:
+-``{"status": pass|warn|fail|na, "detail": str, "evidence": str, "severity": optional}``.
+-Fixes return ``(message, needs_reload)``.
+-"""
+-
+-import os
+-from datetime import timedelta
+-
+-from odoo import SUPERUSER_ID, _, api, fields, models, release
+-from odoo.exceptions import AccessDenied, UserError
+-from odoo.modules.registry import Registry
+-from odoo.tools import config
+-
+-WEAK_PASSWORDS = ("admin", "odoo", "password", "123456", "changeme", "demo")
+-DORMANT_DAYS = 90
+-API_KEY_MAX_AGE_DAYS = 180
+-MAX_ADMINS = 3
+-MAX_ACCOUNTING_ADMINS = 2
+-MIN_PASSWORD_LENGTH = 12
+-SELF_MODULE = "odoo_shield_warden"
+-# Controls that Odoo.sh operates on the customer's behalf.
+-ODOO_SH_MANAGED = {"backup_offsite": "Odoo.sh takes daily off-site backups of production.",
+-                   "staging_env": "Odoo.sh provides staging branches built from production."}
+-
+-
+-def result(status, detail, evidence="", severity=None):
+-    res = {"status": status, "detail": detail, "evidence": evidence}
+-    if severity:
+-        res["severity"] = severity
+-    return res
+-
+-
+-def listing(items, limit=15):
+-    items = list(items)
+-    more = f" (+{len(items) - limit} more)" if len(items) > limit else ""
+-    return ", ".join(items[:limit]) + more
+-
+-
+-class ShieldCheck(models.AbstractModel):
+-    _name = "shield.check"
+-    _description = "Security Check Engine"
+-
+-    # -- helpers ---------------------------------------------------------------
+-
+-    def _param(self, key, default=False):
+-        return self.env["ir.config_parameter"].sudo().get_param(key, default)
+-
+-    def _installed(self, name):
+-        return bool(self.env["ir.module.module"].sudo().search_count(
+-            [("name", "=", name), ("state", "=", "installed")]))
+-
+-    def _internal_users(self):
+-        return self.env["res.users"].sudo().search([("share", "=", False)])
+-
+-    def _group_users(self, xmlid):
+-        group = self.env.ref(xmlid, raise_if_not_found=False)
+-        if not group:
+-            return self.env["res.users"]
+-        return group.sudo().users.filtered(lambda u: u.active and not u.share and u.id != SUPERUSER_ID)
+-
+-    def _third_party_modules(self):
+-        mods = self.env["ir.module.module"].sudo().search([("state", "=", "installed")])
+-        return mods.filtered(lambda m: "Odoo S.A." not in (m.author or "") and not m.name.startswith(SELF_MODULE))
+-
+-    def _is_odoo_sh(self):
+-        return bool(os.environ.get("ODOO_STAGE"))
+-
+-    def _is_local(self, url):
+-        return any(h in (url or "") for h in ("://localhost", "://127.0.0.1"))
+-
+-    def _ensure_module(self, name):
+-        """Install ``name`` if needed. Returns True when an install happened (registry reloaded)."""
+-        module = self.env["ir.module.module"].sudo().search([("name", "=", name)], limit=1)
+-        if not module:
+-            raise UserError(_("Module %s is not available on this server.", name))
+-        if module.state == "installed":
+-            return False
+-        module.button_immediate_install()
+-        return True
+-
+-    def _set_param(self, key, value, after_install):
+-        if after_install:
+-            # The install reloaded the registry; write through a fresh cursor on the new one.
+-            with Registry(self.env.cr.dbname).cursor() as cr:
+-                api.Environment(cr, SUPERUSER_ID, {})["ir.config_parameter"].set_param(key, value)
+-        else:
+-            self.env["ir.config_parameter"].sudo().set_param(key, value)
+-
+-    # -- manual controls ---------------------------------------------------------
+-
+-    def _attestation_result(self, control):
+-        if control.code in ODOO_SH_MANAGED and self._is_odoo_sh():
+-            return result("pass", ODOO_SH_MANAGED[control.code], "ODOO_STAGE environment detected")
+-        att = self.env["shield.attestation"].sudo().search([("control_id", "=", control.id)], limit=1)
+-        if not att:
+-            return result("fail", _("No attestation recorded. Record evidence under Shield > Attestations."))
+-        if att.result != "compliant":
+-            return result("fail", _("Attested NOT compliant on %(date)s by %(user)s.",
+-                                    date=att.date, user=att.attested_by.name))
+-        if att.valid_until < fields.Date.context_today(self):
+-            return result("fail", _("Last attestation expired on %s.", att.valid_until))
+-        return result("pass", _("Attested by %(user)s on %(date)s, valid until %(until)s.",
+-                                user=att.attested_by.name, date=att.date, until=att.valid_until),
+-                      f"shield.attestation,{att.id}")
+-
+-    # -- identity & authentication ------------------------------------------------
+-
+-    def _check_admin_default_login(self):
+-        user = self.env["res.users"].sudo().search([("login", "=", "admin")], limit=1)
+-        if not user:
+-            return result("pass", _("No active account uses the default login 'admin'."))
+-        try:
+-            user.with_user(user)._check_credentials(
+-                {"type": "password", "password": "admin", "login": "admin"}, {"interactive": False})
+-            return result("fail", _("The 'admin' account still has the default password 'admin'."),
+-                          f"res.users,{user.id}", severity="critical")
+-        except AccessDenied:
+-            pass
+-        except Exception:  # credential API differs between versions; fall back to login-only finding
+-            pass
+-        return result("fail", _("An active account uses the predictable login 'admin'."), f"res.users,{user.id}")
+-
+-    def _check_admin_count(self):
+-        admins = self._group_users("base.group_system")
+-        evidence = listing(admins.mapped("login"))
+-        if len(admins) > MAX_ADMINS:
+-            return result("fail", _("%(n)s users hold Settings/Administration rights (target <= %(max)s): %(who)s",
+-                                    n=len(admins), max=MAX_ADMINS, who=evidence), evidence)
+-        return result("pass", _("%s Settings administrator(s).", len(admins)), evidence)
+-
+-    def _check_mfa_coverage(self):
+-        if not self._installed("auth_totp"):
+-            return result("fail", _("Two-factor authentication (auth_totp) is not installed."))
+-        users = self._internal_users()
+-        missing = users.filtered(lambda u: not u.totp_enabled)
+-        admins_missing = missing & self._group_users("base.group_system")
+-        if admins_missing:
+-            return result("fail", _("%(n)s administrator(s) without 2FA: %(who)s",
+-                                    n=len(admins_missing), who=listing(admins_missing.mapped("login"))),
+-                          listing(missing.mapped("login")))
+-        if missing:
+-            return result("warn", _("%(n)s of %(t)s internal users without 2FA: %(who)s",
+-                                    n=len(missing), t=len(users), who=listing(missing.mapped("login"))))
+-        return result("pass", _("All %s internal users use 2FA.", len(users)))
+-
+-    def _check_mfa_enforced(self):
+-        policy = self._param("auth_totp.policy")
+-        if self._installed("auth_totp_mail_enforce") and policy in ("employee_required", "all_required"):
+-            return result("pass", _("2FA is enforced (policy: %s).", policy))
+-        return result("fail", _("2FA is optional; users can log in with a password only."))
+-
+-    def _fix_mfa_enforced(self):
+-        has_mail = self.env["ir.mail_server"].sudo().search_count([]) or self._is_odoo_sh() or "saas" in release.serie
+-        if not has_mail:
+-            raise UserError(_("Configure an outgoing mail server first. Enforced 2FA emails a login code to users "
+-                              "without an authenticator app; without mail they would be locked out."))
+-        installed_now = self._ensure_module("auth_totp_mail_enforce")
+-        self._set_param("auth_totp.policy", "employee_required", installed_now)
+-        return _("2FA is now required for all internal users."), installed_now
+-
+-    def _check_password_policy(self):
+-        if not self._installed("auth_password_policy"):
+-            return result("fail", _("No password policy module installed."))
+-        length = int(self._param("auth_password_policy.minlength", 0) or 0)
+-        if length < MIN_PASSWORD_LENGTH:
+-            return result("warn", _("Minimum password length is %(n)s (target %(t)s).",
+-                                    n=length, t=MIN_PASSWORD_LENGTH))
+-        return result("pass", _("Minimum password length is %s.", length))
+-
+-    def _fix_password_policy(self):
+-        installed_now = self._ensure_module("auth_password_policy")
+-        self._set_param("auth_password_policy.minlength", MIN_PASSWORD_LENGTH, installed_now)
+-        return _("Minimum password length set to %s characters.", MIN_PASSWORD_LENGTH), installed_now
+-
+-    def _dormant_users(self):
+-        cutoff = fields.Datetime.now() - timedelta(days=DORMANT_DAYS)
+-        return self._internal_users().filtered(
+-            lambda u: u.id != SUPERUSER_ID and ((u.login_date or u.create_date) < cutoff))
+-
+-    def _check_dormant_users(self):
+-        dormant = self._dormant_users()
+-        if dormant:
+-            return result("fail", _("%(n)s internal account(s) idle for more than %(d)s days: %(who)s",
+-                                    n=len(dormant), d=DORMANT_DAYS, who=listing(dormant.mapped("login"))))
+-        return result("pass", _("No internal account idle for more than %s days.", DORMANT_DAYS))
+-
+-    def _fix_dormant_users(self):
+-        dormant = self._dormant_users() - self.env.user
+-        logins = listing(dormant.mapped("login"))
+-        dormant.sudo().write({"active": False})
+-        return _("Archived %(n)s dormant account(s): %(who)s. Unarchive from Settings > Users if needed.",
+-                 n=len(dormant), who=logins), False
+-
+-    def _check_signup_open(self):
+-        if not self._installed("auth_signup"):
+-            return result("na", _("Self sign-up module not installed."))
+-        if self._param("auth_signup.invitation_scope") == "b2c":
+-            return result("fail", _("Anyone can create a portal account (free sign-up)."))
+-        return result("pass", _("Sign-up is by invitation only."))
+-
+-    def _fix_signup_open(self):
+-        self._set_param("auth_signup.invitation_scope", "b2b", False)
+-        return _("Customer account sign-up switched to invitation only."), False
+-
+-    def _check_api_keys(self):
+-        keys = self.env["res.users.apikeys"].sudo().search([])
+-        if not keys:
+-            return result("pass", _("No API keys issued."))
+-        cutoff = fields.Datetime.now() - timedelta(days=API_KEY_MAX_AGE_DAYS)
+-        inventory = listing(f"{k.name} ({k.user_id.login})" for k in keys)
+-        orphaned = keys.filtered(lambda k: not k.user_id.active)
+-        old = keys.filtered(lambda k: k.create_date < cutoff)
+-        if orphaned:
+-            return result("fail", _("%s API key(s) belong to archived users.", len(orphaned)), inventory)
+-        if old:
+-            return result("warn", _("%(n)s API key(s) older than %(d)s days; rotate them.",
+-                                    n=len(old), d=API_KEY_MAX_AGE_DAYS), inventory)
+-        return result("pass", _("%s API key(s), all recent and owned by active users.", len(keys)), inventory)
+-
+-    # -- access control ------------------------------------------------------------
+-
+-    def _check_custom_module_acl(self):
+-        custom = self._third_party_modules()
+-        if not custom:
+-            return result("na", _("No third-party modules installed."))
+-        xmlids = self.env["ir.model.data"].sudo().search(
+-            [("model", "=", "ir.model.access"), ("module", "in", custom.mapped("name"))])
+-        risky = self.env["ir.model.access"].sudo().browse(xmlids.mapped("res_id")).exists().filtered(
+-            lambda a: not a.group_id and (a.perm_write or a.perm_create or a.perm_unlink))
+-        if risky:
+-            return result("fail", _("%(n)s access rule(s) from custom modules grant write/delete to every user, "
+-                                    "portal and public included (no group): %(models)s.",
+-                                    n=len(risky), models=listing(risky.mapped("model_id.model"))),
+-                          listing(risky.mapped("model_id.model"), limit=100))
+-        return result("pass", _("Custom modules (%s) restrict write access to groups.", len(custom)))
+-
+-    def _check_accounting_admins(self):
+-        if not self._installed("account"):
+-            return result("na", _("Accounting is not installed."))
+-        admins = self._group_users("account.group_account_manager")
+-        if len(admins) > MAX_ACCOUNTING_ADMINS:
+-            return result("warn", _("%(n)s accounting administrators (target <= %(m)s): %(who)s. Review that bill "
+-                                    "creation and payment approval are split between people.",
+-                                    n=len(admins), m=MAX_ACCOUNTING_ADMINS, who=listing(admins.mapped("login"))))
+-        return result("pass", _("%s accounting administrator(s).", len(admins)))
+-
+-    # -- platform configuration --------------------------------------------------
+-
+-    def _check_dbmanager_exposed(self):
+-        if config.get("list_db"):
+-            return result("fail", _("The database manager and database list are enabled (list_db = True). "
+-                                    "Anyone holding the master password can download or drop databases."))
+-        return result("pass", _("Database manager disabled (list_db = False)."))
+-
+-    def _check_master_password(self):
+-        stored = config.get("admin_passwd") or ""
+-        if not stored:
+-            return result("pass", _("No master password set; database management is disabled."))
+-        weak = any(config.verify_admin_password(p) for p in WEAK_PASSWORDS)
+-        if weak:
+-            return result("fail", _("The master password is a common default."), severity="critical")
+-        if not stored.startswith("$"):
+-            return result("fail", _("The master password is stored in plain text in the config file."),
+-                          severity="high")
+-        return result("pass", _("Master password is hashed and not a known default."))
+-
+-    def _check_dev_mode(self):
+-        if config.get("dev_mode"):
+-            return result("fail", _("Server runs with dev_mode = %s (auto-reload, detailed tracebacks).",
+-                                    ",".join(config["dev_mode"])))
+-        return result("pass", _("Developer mode is off server-wide."))
+-
+-    def _check_workers(self):
+-        if self._is_odoo_sh():
+-            return result("na", _("Worker configuration is managed by Odoo.sh."))
+-        if not config.get("workers"):
+-            return result("warn", _("workers = 0: single process without memory/time limits; one heavy request "
+-                                    "can stall every user."))
+-        return result("pass", _("%s worker processes with limits.", config["workers"]))
+-
+-    def _check_dbfilter(self):
+-        if self._is_odoo_sh() or config.get("dbfilter") or config.get("db_name"):
+-            return result("pass", _("Database selection is restricted."))
+-        return result("warn", _("No dbfilter: any database on the server can be selected by URL."))
+-
+-    # -- encryption in transit -----------------------------------------------------
+-
+-    def _check_https_base_url(self):
+-        url = self._param("web.base.url", "")
+-        if url.startswith("https://"):
+-            return result("pass", _("Base URL uses HTTPS: %s", url))
+-        if self._is_local(url):
+-            return result("warn", _("Base URL is local plain HTTP (%s); fine for testing only.", url),
+-                          severity="low")
+-        return result("fail", _("Base URL uses plain HTTP (%s); logins travel unencrypted.", url))
+-
+-    def _check_mail_server_tls(self):
+-        servers = self.env["ir.mail_server"].sudo().search([])
+-        if not servers:
+-            return result("na", _("No custom outgoing mail server configured."))
+-        insecure = servers.filtered(lambda s: s.smtp_encryption == "none" and not self._is_local(f"://{s.smtp_host}"))
+-        if insecure:
+-            return result("fail", _("Mail server(s) without TLS: %s", listing(insecure.mapped("name"))))
+-        return result("pass", _("All %s outgoing mail server(s) use TLS.", len(servers)))
+-
+-    # -- monitoring & operations ---------------------------------------------------
+-
+-    def _check_cron_failures(self):
+-        failing = self.env["ir.cron"].sudo().search([("active", "=", True), ("failure_count", ">", 0)])
+-        if failing:
+-            return result("fail", _("%s scheduled action(s) failing: %s", len(failing),
+-                                    listing(f"{c.name} ({c.failure_count}x)" for c in failing)))
+-        return result("pass", _("No failing scheduled actions."))
+-
+-    def _check_mail_queue(self):
+-        if "mail.mail" not in self.env:
+-            return result("na", _("Mail not installed."))
+-        stuck = self.env["mail.mail"].sudo().search_count([("state", "=", "exception")])
+-        if stuck:
+-            return result("warn", _("%s outgoing email(s) failed to send.", stuck))
+-        return result("pass", _("No failed outgoing emails."))
+-
+-    # -- vulnerability management --------------------------------------------------
+-
+-    def _check_version_support(self):
+-        serie = release.serie
+-        if "saas" in serie:
+-            return result("pass", _("Odoo Online (%s) is upgraded by Odoo.", serie))
+-        latest = int(self._param("shield.latest_odoo_major", 19))
+-        major = int(serie.split(".")[0])
+-        if major >= latest:
+-            return result("pass", _("Odoo %s is the latest major version.", serie))
+-        if major >= latest - 2:
+-            return result("warn", _("Odoo %(s)s is supported but %(n)s major version(s) behind %(l)s.0.",
+-                                    s=serie, n=latest - major, l=latest), severity="low")
+-        return result("fail", _("Odoo %s no longer receives security fixes.", serie), severity="critical")
+-
+-    def _check_pending_module_upgrades(self):
+-        mods = self.env["ir.module.module"].sudo().search([("state", "in", ("installed", "to upgrade"))])
+-        stale = mods.filtered(lambda m: m.state == "to upgrade" or (
+-            m.installed_version and m.latest_version and m.installed_version != m.latest_version))
+-        if stale:
+-            return result("fail", _("%s module(s) have new code on disk that was never upgraded in the database: %s",
+-                                    len(stale), listing(stale.mapped("name"))))
+-        return result("pass", _("All module code matches the database (%s modules).", len(mods)))
+-
+-    def _check_third_party_modules(self):
+-        custom = self._third_party_modules()
+-        if not custom:
+-            return result("pass", _("Only official Odoo modules installed."))
+-        return result("warn", _("%s third-party module(s) need security review and upgrade testing: %s",
+-                                len(custom), listing(custom.mapped("name"))))
++"""Check and fix implementations.
++
++Every automated control with code X is evaluated by ``_check_X`` and may offer a
++one-click hardening via ``_fix_X``. Checks are read-only and return a dict:
++``{"status": pass|warn|fail|na, "detail": str, "evidence": str, "severity": optional}``.
++Fixes return ``(message, needs_reload)``.
++"""
++
++import os
++from datetime import timedelta
++
++from odoo import SUPERUSER_ID, _, api, fields, models, release
++from odoo.exceptions import AccessDenied, UserError
++from odoo.modules.registry import Registry
++from odoo.tools import config
++
++WEAK_PASSWORDS = ("admin", "odoo", "password", "123456", "changeme", "demo")
++DORMANT_DAYS = 90
++API_KEY_MAX_AGE_DAYS = 180
++MAX_ADMINS = 3
++MAX_ACCOUNTING_ADMINS = 2
++MIN_PASSWORD_LENGTH = 12
++SELF_MODULE = "odoo_shield_warden"
++# Controls that Odoo.sh operates on the customer's behalf.
++ODOO_SH_MANAGED = {"backup_offsite": "Odoo.sh takes daily off-site backups of production.",
++                   "staging_env": "Odoo.sh provides staging branches built from production."}
++
++
++def result(status, detail, evidence="", severity=None):
++    res = {"status": status, "detail": detail, "evidence": evidence}
++    if severity:
++        res["severity"] = severity
++    return res
++
++
++def listing(items, limit=15):
++    items = list(items)
++    more = f" (+{len(items) - limit} more)" if len(items) > limit else ""
++    return ", ".join(items[:limit]) + more
++
++
++class ShieldCheck(models.AbstractModel):
++    _name = "shield.check"
++    _description = "Security Check Engine"
++
++    # -- helpers ---------------------------------------------------------------
++
++    def _param(self, key, default=False):
++        return self.env["ir.config_parameter"].sudo().get_param(key, default)
++
++    def _installed(self, name):
++        return bool(self.env["ir.module.module"].sudo().search_count(
++            [("name", "=", name), ("state", "=", "installed")]))
++
++    def _internal_users(self):
++        return self.env["res.users"].sudo().search([("share", "=", False)])
++
++    def _group_users(self, xmlid):
++        group = self.env.ref(xmlid, raise_if_not_found=False)
++        if not group:
++            return self.env["res.users"]
++        return group.sudo().users.filtered(lambda u: u.active and not u.share and u.id != SUPERUSER_ID)
++
++    def _third_party_modules(self):
++        mods = self.env["ir.module.module"].sudo().search([("state", "=", "installed")])
++        return mods.filtered(lambda m: "Odoo S.A." not in (m.author or "") and not m.name.startswith(SELF_MODULE))
++
++    def _is_odoo_sh(self):
++        return bool(os.environ.get("ODOO_STAGE"))
++
++    def _is_local(self, url):
++        return any(h in (url or "") for h in ("://localhost", "://127.0.0.1"))
++
++    def _ensure_module(self, name):
++        """Install ``name`` if needed. Returns True when an install happened (registry reloaded)."""
++        module = self.env["ir.module.module"].sudo().search([("name", "=", name)], limit=1)
++        if not module:
++            raise UserError(_("Module %s is not available on this server.", name))
++        if module.state == "installed":
++            return False
++        module.button_immediate_install()
++        return True
++
++    def _set_param(self, key, value, after_install):
++        if after_install:
++            # The install reloaded the registry; write through a fresh cursor on the new one.
++            with Registry(self.env.cr.dbname).cursor() as cr:
++                api.Environment(cr, SUPERUSER_ID, {})["ir.config_parameter"].set_param(key, value)
++        else:
++            self.env["ir.config_parameter"].sudo().set_param(key, value)
++
++    # -- manual controls ---------------------------------------------------------
++
++    def _attestation_result(self, control):
++        if control.code in ODOO_SH_MANAGED and self._is_odoo_sh():
++            return result("pass", ODOO_SH_MANAGED[control.code], "ODOO_STAGE environment detected")
++        att = self.env["shield.attestation"].sudo().search([("control_id", "=", control.id)], limit=1)
++        if not att:
++            return result("fail", _("No attestation recorded. Record evidence under Shield > Attestations."))
++        if att.result != "compliant":
++            return result("fail", _("Attested NOT compliant on %(date)s by %(user)s.",
++                                    date=att.date, user=att.attested_by.name))
++        if att.valid_until < fields.Date.context_today(self):
++            return result("fail", _("Last attestation expired on %s.", att.valid_until))
++        return result("pass", _("Attested by %(user)s on %(date)s, valid until %(until)s.",
++                                user=att.attested_by.name, date=att.date, until=att.valid_until),
++                      f"shield.attestation,{att.id}")
++
++    # -- identity & authentication ------------------------------------------------
++
++    def _check_admin_default_login(self):
++        user = self.env["res.users"].sudo().search([("login", "=", "admin")], limit=1)
++        if not user:
++            return result("pass", _("No active account uses the default login 'admin'."))
++        try:
++            user.with_user(user)._check_credentials(
++                {"type": "password", "password": "admin", "login": "admin"}, {"interactive": False})
++            return result("fail", _("The 'admin' account still has the default password 'admin'."),
++                          f"res.users,{user.id}", severity="critical")
++        except AccessDenied:
++            pass
++        except Exception:  # credential API differs between versions; fall back to login-only finding
++            pass
++        return result("fail", _("An active account uses the predictable login 'admin'."), f"res.users,{user.id}")
++
++    def _check_admin_count(self):
++        admins = self._group_users("base.group_system")
++        evidence = listing(admins.mapped("login"))
++        if len(admins) > MAX_ADMINS:
++            return result("fail", _("%(n)s users hold Settings/Administration rights (target <= %(max)s): %(who)s",
++                                    n=len(admins), max=MAX_ADMINS, who=evidence), evidence)
++        return result("pass", _("%s Settings administrator(s).", len(admins)), evidence)
++
++    def _check_mfa_coverage(self):
++        if not self._installed("auth_totp"):
++            return result("fail", _("Two-factor authentication (auth_totp) is not installed."))
++        users = self._internal_users()
++        missing = users.filtered(lambda u: not u.totp_enabled)
++        admins_missing = missing & self._group_users("base.group_system")
++        if admins_missing:
++            return result("fail", _("%(n)s administrator(s) without 2FA: %(who)s",
++                                    n=len(admins_missing), who=listing(admins_missing.mapped("login"))),
++                          listing(missing.mapped("login")))
++        if missing:
++            return result("warn", _("%(n)s of %(t)s internal users without 2FA: %(who)s",
++                                    n=len(missing), t=len(users), who=listing(missing.mapped("login"))))
++        return result("pass", _("All %s internal users use 2FA.", len(users)))
++
++    def _check_mfa_enforced(self):
++        policy = self._param("auth_totp.policy")
++        if self._installed("auth_totp_mail_enforce") and policy in ("employee_required", "all_required"):
++            return result("pass", _("2FA is enforced (policy: %s).", policy))
++        return result("fail", _("2FA is optional; users can log in with a password only."))
++
++    def _fix_mfa_enforced(self):
++        has_mail = self.env["ir.mail_server"].sudo().search_count([]) or self._is_odoo_sh() or "saas" in release.serie
++        if not has_mail:
++            raise UserError(_("Configure an outgoing mail server first. Enforced 2FA emails a login code to users "
++                              "without an authenticator app; without mail they would be locked out."))
++        installed_now = self._ensure_module("auth_totp_mail_enforce")
++        self._set_param("auth_totp.policy", "employee_required", installed_now)
++        return _("2FA is now required for all internal users."), installed_now
++
++    def _check_password_policy(self):
++        if not self._installed("auth_password_policy"):
++            return result("fail", _("No password policy module installed."))
++        length = int(self._param("auth_password_policy.minlength", 0) or 0)
++        if length < MIN_PASSWORD_LENGTH:
++            return result("warn", _("Minimum password length is %(n)s (target %(t)s).",
++                                    n=length, t=MIN_PASSWORD_LENGTH))
++        return result("pass", _("Minimum password length is %s.", length))
++
++    def _fix_password_policy(self):
++        installed_now = self._ensure_module("auth_password_policy")
++        self._set_param("auth_password_policy.minlength", MIN_PASSWORD_LENGTH, installed_now)
++        return _("Minimum password length set to %s characters.", MIN_PASSWORD_LENGTH), installed_now
++
++    def _dormant_users(self):
++        cutoff = fields.Datetime.now() - timedelta(days=DORMANT_DAYS)
++        return self._internal_users().filtered(
++            lambda u: u.id != SUPERUSER_ID and ((u.login_date or u.create_date) < cutoff))
++
++    def _check_dormant_users(self):
++        dormant = self._dormant_users()
++        if dormant:
++            return result("fail", _("%(n)s internal account(s) idle for more than %(d)s days: %(who)s",
++                                    n=len(dormant), d=DORMANT_DAYS, who=listing(dormant.mapped("login"))))
++        return result("pass", _("No internal account idle for more than %s days.", DORMANT_DAYS))
++
++    def _fix_dormant_users(self):
++        dormant = self._dormant_users() - self.env.user
++        logins = listing(dormant.mapped("login"))
++        dormant.sudo().write({"active": False})
++        return _("Archived %(n)s dormant account(s): %(who)s. Unarchive from Settings > Users if needed.",
++                 n=len(dormant), who=logins), False
++
++    def _check_signup_open(self):
++        if not self._installed("auth_signup"):
++            return result("na", _("Self sign-up module not installed."))
++        if self._param("auth_signup.invitation_scope") == "b2c":
++            return result("fail", _("Anyone can create a portal account (free sign-up)."))
++        return result("pass", _("Sign-up is by invitation only."))
++
++    def _fix_signup_open(self):
++        self._set_param("auth_signup.invitation_scope", "b2b", False)
++        return _("Customer account sign-up switched to invitation only."), False
++
++    def _check_api_keys(self):
++        keys = self.env["res.users.apikeys"].sudo().search([])
++        if not keys:
++            return result("pass", _("No API keys issued."))
++        cutoff = fields.Datetime.now() - timedelta(days=API_KEY_MAX_AGE_DAYS)
++        inventory = listing(f"{k.name} ({k.user_id.login})" for k in keys)
++        orphaned = keys.filtered(lambda k: not k.user_id.active)
++        old = keys.filtered(lambda k: k.create_date < cutoff)
++        if orphaned:
++            return result("fail", _("%s API key(s) belong to archived users.", len(orphaned)), inventory)
++        if old:
++            return result("warn", _("%(n)s API key(s) older than %(d)s days; rotate them.",
++                                    n=len(old), d=API_KEY_MAX_AGE_DAYS), inventory)
++        return result("pass", _("%s API key(s), all recent and owned by active users.", len(keys)), inventory)
++
++    # -- access control ------------------------------------------------------------
++
++    def _check_custom_module_acl(self):
++        custom = self._third_party_modules()
++        if not custom:
++            return result("na", _("No third-party modules installed."))
++        xmlids = self.env["ir.model.data"].sudo().search(
++            [("model", "=", "ir.model.access"), ("module", "in", custom.mapped("name"))])
++        risky = self.env["ir.model.access"].sudo().browse(xmlids.mapped("res_id")).exists().filtered(
++            lambda a: not a.group_id and (a.perm_write or a.perm_create or a.perm_unlink))
++        if risky:
++            return result("fail", _("%(n)s access rule(s) from custom modules grant write/delete to every user, "
++                                    "portal and public included (no group): %(models)s.",
++                                    n=len(risky), models=listing(risky.mapped("model_id.model"))),
++                          listing(risky.mapped("model_id.model"), limit=100))
++        return result("pass", _("Custom modules (%s) restrict write access to groups.", len(custom)))
++
++    def _check_accounting_admins(self):
++        if not self._installed("account"):
++            return result("na", _("Accounting is not installed."))
++        admins = self._group_users("account.group_account_manager")
++        if len(admins) > MAX_ACCOUNTING_ADMINS:
++            return result("warn", _("%(n)s accounting administrators (target <= %(m)s): %(who)s. Review that bill "
++                                    "creation and payment approval are split between people.",
++                                    n=len(admins), m=MAX_ACCOUNTING_ADMINS, who=listing(admins.mapped("login"))))
++        return result("pass", _("%s accounting administrator(s).", len(admins)))
++
++    # -- platform configuration --------------------------------------------------
++
++    def _check_dbmanager_exposed(self):
++        if config.get("list_db"):
++            return result("fail", _("The database manager and database list are enabled (list_db = True). "
++                                    "Anyone holding the master password can download or drop databases."))
++        return result("pass", _("Database manager disabled (list_db = False)."))
++
++    def _check_master_password(self):
++        stored = config.get("admin_passwd") or ""
++        if not stored:
++            return result("pass", _("No master password set; database management is disabled."))
++        weak = any(config.verify_admin_password(p) for p in WEAK_PASSWORDS)
++        if weak:
++            return result("fail", _("The master password is a common default."), severity="critical")
++        if not stored.startswith("$"):
++            return result("fail", _("The master password is stored in plain text in the config file."),
++                          severity="high")
++        return result("pass", _("Master password is hashed and not a known default."))
++
++    def _check_dev_mode(self):
++        if config.get("dev_mode"):
++            return result("fail", _("Server runs with dev_mode = %s (auto-reload, detailed tracebacks).",
++                                    ",".join(config["dev_mode"])))
++        return result("pass", _("Developer mode is off server-wide."))
++
++    def _check_workers(self):
++        if self._is_odoo_sh():
++            return result("na", _("Worker configuration is managed by Odoo.sh."))
++        if not config.get("workers"):
++            return result("warn", _("workers = 0: single process without memory/time limits; one heavy request "
++                                    "can stall every user."))
++        return result("pass", _("%s worker processes with limits.", config["workers"]))
++
++    def _check_dbfilter(self):
++        if self._is_odoo_sh() or config.get("dbfilter") or config.get("db_name"):
++            return result("pass", _("Database selection is restricted."))
++        return result("warn", _("No dbfilter: any database on the server can be selected by URL."))
++
++    # -- encryption in transit -----------------------------------------------------
++
++    def _check_https_base_url(self):
++        url = self._param("web.base.url", "")
++        if url.startswith("https://"):
++            return result("pass", _("Base URL uses HTTPS: %s", url))
++        if self._is_local(url):
++            return result("warn", _("Base URL is local plain HTTP (%s); fine for testing only.", url),
++                          severity="low")
++        return result("fail", _("Base URL uses plain HTTP (%s); logins travel unencrypted.", url))
++
++    def _check_mail_server_tls(self):
++        servers = self.env["ir.mail_server"].sudo().search([])
++        if not servers:
++            return result("na", _("No custom outgoing mail server configured."))
++        insecure = servers.filtered(lambda s: s.smtp_encryption == "none" and not self._is_local(f"://{s.smtp_host}"))
++        if insecure:
++            return result("fail", _("Mail server(s) without TLS: %s", listing(insecure.mapped("name"))))
++        return result("pass", _("All %s outgoing mail server(s) use TLS.", len(servers)))
++
++    # -- monitoring & operations ---------------------------------------------------
++
++    def _check_cron_failures(self):
++        if "failure_count" not in self.env["ir.cron"]._fields:  # Odoo 17 has no cron failure counter
++            return result("na", _("This Odoo version does not record scheduled-action failures."))
++        failing = self.env["ir.cron"].sudo().search([("active", "=", True), ("failure_count", ">", 0)])
++        if failing:
++            return result("fail", _("%s scheduled action(s) failing: %s", len(failing),
++                                    listing(f"{c.name} ({c.failure_count}x)" for c in failing)))
++        return result("pass", _("No failing scheduled actions."))
++
++    def _check_mail_queue(self):
++        if "mail.mail" not in self.env:
++            return result("na", _("Mail not installed."))
++        stuck = self.env["mail.mail"].sudo().search_count([("state", "=", "exception")])
++        if stuck:
++            return result("warn", _("%s outgoing email(s) failed to send.", stuck))
++        return result("pass", _("No failed outgoing emails."))
++
++    # -- vulnerability management --------------------------------------------------
++
++    def _check_version_support(self):
++        serie = release.serie
++        if "saas" in serie:
++            return result("pass", _("Odoo Online (%s) is upgraded by Odoo.", serie))
++        latest = int(self._param("shield.latest_odoo_major", 19))
++        major = int(serie.split(".")[0])
++        if major >= latest:
++            return result("pass", _("Odoo %s is the latest major version.", serie))
++        if major >= latest - 2:
++            return result("warn", _("Odoo %(s)s is supported but %(n)s major version(s) behind %(l)s.0.",
++                                    s=serie, n=latest - major, l=latest), severity="low")
++        return result("fail", _("Odoo %s no longer receives security fixes.", serie), severity="critical")
++
++    def _check_pending_module_upgrades(self):
++        mods = self.env["ir.module.module"].sudo().search([("state", "in", ("installed", "to upgrade"))])
++        stale = mods.filtered(lambda m: m.state == "to upgrade" or (
++            m.installed_version and m.latest_version and m.installed_version != m.latest_version))
++        if stale:
++            return result("fail", _("%s module(s) have new code on disk that was never upgraded in the database: %s",
++                                    len(stale), listing(stale.mapped("name"))))
++        return result("pass", _("All module code matches the database (%s modules).", len(mods)))
++
++    def _check_third_party_modules(self):
++        custom = self._third_party_modules()
++        if not custom:
++            return result("pass", _("Only official Odoo modules installed."))
++        return result("warn", _("%s third-party module(s) need security review and upgrade testing: %s",
++                                len(custom), listing(custom.mapped("name"))))
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden/views/shield_assessment_views.xml odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_assessment_views.xml
+--- odoo-shield-warden/addons/odoo_shield_warden/views/shield_assessment_views.xml	2026-10-31 23:18:43.156706900 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_assessment_views.xml	2026-11-05 18:19:30.590171100 -0300
+@@ -42,7 +42,7 @@
+         <field name="name">shield.assessment.list</field>
+         <field name="model">shield.assessment</field>
+         <field name="arch" type="xml">
+-            <list create="false">
++            <tree create="false">
+                 <header>
+                     <button name="action_run_assessment" type="object" string="Run assessment" class="btn-primary"
+                             display="always" groups="odoo_shield_warden.group_shield_manager"/>
+@@ -57,7 +57,7 @@
+                 <field name="warn_count"/>
+                 <field name="pass_count"/>
+                 <field name="user_id" optional="hide"/>
+-            </list>
++            </tree>
+         </field>
+     </record>
+ 
+@@ -100,19 +100,19 @@
+                         <group string="Compliance">
+                             <field name="grc_score" widget="progressbar"/>
+                             <field name="framework_score_ids" nolabel="1" colspan="2">
+-                                <list>
++                                <tree>
+                                     <field name="framework_id"/>
+                                     <field name="satisfied"/>
+                                     <field name="applicable"/>
+                                     <field name="percent" widget="progressbar"/>
+-                                </list>
++                                </tree>
+                             </field>
+                         </group>
+                     </group>
+                     <notebook>
+                         <page string="Results">
+                             <field name="result_ids">
+-                                <list decoration-danger="status == 'fail'" decoration-warning="status == 'warn'"
++                                <tree decoration-danger="status == 'fail'" decoration-warning="status == 'warn'"
+                                       decoration-success="status == 'pass'" decoration-muted="status == 'na'">
+                                     <field name="status" widget="badge" decoration-danger="status == 'fail'"
+                                            decoration-warning="status == 'warn'" decoration-success="status == 'pass'"/>
+@@ -123,7 +123,7 @@
+                                     <field name="framework_refs" optional="hide"/>
+                                     <field name="kind" optional="hide"/>
+                                     <field name="finding_id" optional="hide"/>
+-                                </list>
++                                </tree>
+                             </field>
+                         </page>
+                         <page string="Counts &amp; seal">
+@@ -143,7 +143,7 @@
+                         </page>
+                     </notebook>
+                 </sheet>
+-                <chatter/>
++                <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+             </form>
+         </field>
+     </record>
+@@ -165,7 +165,7 @@
+     <record id="action_shield_dashboard" model="ir.actions.act_window">
+         <field name="name">Security Dashboard</field>
+         <field name="res_model">shield.assessment</field>
+-        <field name="view_mode">kanban,list,graph,form</field>
++        <field name="view_mode">kanban,tree,graph,form</field>
+         <field name="help" type="html">
+             <p class="o_view_nocontent_smiling_face">Run your first security assessment</p>
+             <p>Shield checks authentication, privileged access, platform configuration, encryption,
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden/views/shield_attestation_views.xml odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_attestation_views.xml
+--- odoo-shield-warden/addons/odoo_shield_warden/views/shield_attestation_views.xml	2026-10-30 15:04:58.329437400 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_attestation_views.xml	2026-11-05 18:19:30.613907000 -0300
+@@ -4,14 +4,14 @@
+         <field name="name">shield.attestation.list</field>
+         <field name="model">shield.attestation</field>
+         <field name="arch" type="xml">
+-            <list decoration-danger="result == 'non_compliant'">
++            <tree decoration-danger="result == 'non_compliant'">
+                 <field name="date"/>
+                 <field name="control_id"/>
+                 <field name="result" widget="badge" decoration-success="result == 'compliant'"
+                        decoration-danger="result == 'non_compliant'"/>
+                 <field name="valid_until"/>
+                 <field name="attested_by" widget="many2one_avatar_user"/>
+-            </list>
++            </tree>
+         </field>
+     </record>
+ 
+@@ -36,7 +36,7 @@
+                     <field name="evidence" placeholder="What was verified, how, by whom, and where the evidence is stored."/>
+                     <field name="attachment_ids" widget="many2many_binary"/>
+                 </sheet>
+-                <chatter/>
++                <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+             </form>
+         </field>
+     </record>
+@@ -44,7 +44,7 @@
+     <record id="action_shield_attestations" model="ir.actions.act_window">
+         <field name="name">Attestations</field>
+         <field name="res_model">shield.attestation</field>
+-        <field name="view_mode">list,form</field>
++        <field name="view_mode">tree,form</field>
+         <field name="help" type="html">
+             <p class="o_view_nocontent_smiling_face">Record evidence for manual controls</p>
+             <p>Backups, restore tests, access reviews and incident response cannot be verified from inside Odoo.
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden/views/shield_control_views.xml odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_control_views.xml
+--- odoo-shield-warden/addons/odoo_shield_warden/views/shield_control_views.xml	2026-10-30 15:04:58.289711500 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_control_views.xml	2026-11-05 18:18:18.465264000 -0300
+@@ -4,7 +4,7 @@
+         <field name="name">shield.control.list</field>
+         <field name="model">shield.control</field>
+         <field name="arch" type="xml">
+-            <list create="false">
++            <tree create="false">
+                 <field name="sequence" widget="handle"/>
+                 <field name="name"/>
+                 <field name="domain"/>
+@@ -13,7 +13,7 @@
+                 <field name="has_fix" string="Fix"/>
+                 <field name="framework_refs"/>
+                 <field name="active" column_invisible="True"/>
+-            </list>
++            </tree>
+         </field>
+     </record>
+ 
+@@ -46,21 +46,21 @@
+                         </page>
+                         <page string="Framework mapping">
+                             <field name="requirement_ids">
+-                                <list>
++                                <tree>
+                                     <field name="framework_id"/>
+                                     <field name="ref"/>
+                                     <field name="name"/>
+-                                </list>
++                                </tree>
+                             </field>
+                         </page>
+                         <page string="Attestations" invisible="kind != 'manual'">
+                             <field name="attestation_ids" context="{'default_control_id': id}">
+-                                <list>
++                                <tree>
+                                     <field name="date"/>
+                                     <field name="result"/>
+                                     <field name="valid_until"/>
+                                     <field name="attested_by"/>
+-                                </list>
++                                </tree>
+                             </field>
+                         </page>
+                     </notebook>
+@@ -90,7 +90,7 @@
+     <record id="action_shield_controls" model="ir.actions.act_window">
+         <field name="name">Controls</field>
+         <field name="res_model">shield.control</field>
+-        <field name="view_mode">list,form</field>
++        <field name="view_mode">tree,form</field>
+         <field name="context">{'search_default_group_domain': 1}</field>
+     </record>
+ </odoo>
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden/views/shield_deletion_log_views.xml odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_deletion_log_views.xml
+--- odoo-shield-warden/addons/odoo_shield_warden/views/shield_deletion_log_views.xml	2026-10-30 16:19:59.526653400 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_deletion_log_views.xml	2026-11-05 18:18:18.473637600 -0300
+@@ -4,7 +4,7 @@
+         <field name="name">shield.deletion.log.list</field>
+         <field name="model">shield.deletion.log</field>
+         <field name="arch" type="xml">
+-            <list create="false" edit="false" delete="false" decoration-danger="record_still_exists">
++            <tree create="false" edit="false" delete="false" decoration-danger="record_still_exists">
+                 <field name="create_date" string="Deleted on"/>
+                 <field name="deleted_by" widget="many2one_avatar_user"/>
+                 <field name="res_model"/>
+@@ -14,14 +14,14 @@
+                 <field name="message_date" optional="hide"/>
+                 <field name="had_tracking"/>
+                 <field name="record_still_exists"/>
+-            </list>
++            </tree>
+         </field>
+     </record>
+ 
+     <record id="action_shield_deletion_log" model="ir.actions.act_window">
+         <field name="name">Deleted Messages</field>
+         <field name="res_model">shield.deletion.log</field>
+-        <field name="view_mode">list</field>
++        <field name="view_mode">tree</field>
+         <field name="help" type="html">
+             <p class="o_view_nocontent_smiling_face">No audit-trail messages deleted</p>
+             <p>Deleting a chatter message on a partner, bank account, invoice, payment, employee or user is recorded here.</p>
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden/views/shield_export_log_views.xml odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_export_log_views.xml
+--- odoo-shield-warden/addons/odoo_shield_warden/views/shield_export_log_views.xml	2026-10-30 15:57:18.943620700 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_export_log_views.xml	2026-11-05 18:18:18.480632500 -0300
+@@ -4,13 +4,13 @@
+         <field name="name">shield.export.log.list</field>
+         <field name="model">shield.export.log</field>
+         <field name="arch" type="xml">
+-            <list create="false" edit="false" delete="false">
++            <tree create="false" edit="false" delete="false">
+                 <field name="create_date" string="When"/>
+                 <field name="user_id" widget="many2one_avatar_user"/>
+                 <field name="model"/>
+                 <field name="record_count" sum="Records"/>
+                 <field name="exported_fields" optional="hide"/>
+-            </list>
++            </tree>
+         </field>
+     </record>
+ 
+@@ -32,7 +32,7 @@
+     <record id="action_shield_export_log" model="ir.actions.act_window">
+         <field name="name">Data Exports</field>
+         <field name="res_model">shield.export.log</field>
+-        <field name="view_mode">list</field>
++        <field name="view_mode">tree</field>
+         <field name="help" type="html">
+             <p class="o_view_nocontent_smiling_face">No exports recorded yet</p>
+             <p>Every export from Odoo's list views or the API is recorded here.</p>
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden/views/shield_finding_views.xml odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_finding_views.xml
+--- odoo-shield-warden/addons/odoo_shield_warden/views/shield_finding_views.xml	2026-10-30 16:23:10.717671000 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_finding_views.xml	2026-11-05 18:21:13.931456900 -0300
+@@ -1,161 +1,162 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<odoo>
+-    <record id="view_shield_finding_list" model="ir.ui.view">
+-        <field name="name">shield.finding.list</field>
+-        <field name="model">shield.finding</field>
+-        <field name="arch" type="xml">
+-            <list create="false" decoration-muted="state == 'resolved'" decoration-info="state == 'accepted'">
+-                <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"
+-                       decoration-warning="severity == 'medium'"/>
+-                <field name="name"/>
+-                <field name="domain"/>
+-                <field name="status" optional="hide"/>
+-                <field name="state" widget="badge" decoration-danger="state == 'open'"
+-                       decoration-warning="state == 'in_progress'" decoration-info="state == 'accepted'"
+-                       decoration-success="state == 'resolved'"/>
+-                <field name="user_id" widget="many2one_avatar_user"/>
+-                <field name="due_date"/>
+-                <field name="has_fix" string="Fix"/>
+-                <field name="last_seen" optional="hide"/>
+-                <field name="framework_refs" optional="hide"/>
+-            </list>
+-        </field>
+-    </record>
+-
+-    <record id="view_shield_finding_form" model="ir.ui.view">
+-        <field name="name">shield.finding.form</field>
+-        <field name="model">shield.finding</field>
+-        <field name="arch" type="xml">
+-            <form create="false">
+-                <header>
+-                    <button name="action_apply_fix" type="object" string="Apply hardening" class="btn-primary"
+-                            invisible="not has_fix or state == 'resolved'" groups="base.group_system"
+-                            confirm="This changes the production configuration and is logged in the chatter. Continue?"/>
+-                    <button name="action_start" type="object" string="Start remediation"
+-                            invisible="state != 'open'" groups="odoo_shield_warden.group_shield_manager"/>
+-                    <button name="action_accept_risk" type="object" string="Accept risk"
+-                            invisible="state in ('accepted', 'resolved')" groups="odoo_shield_warden.group_shield_manager"/>
+-                    <button name="action_recheck" type="object" string="Re-check now"
+-                            invisible="state == 'resolved'" groups="odoo_shield_warden.group_shield_manager"/>
+-                    <button name="action_reopen" type="object" string="Reopen"
+-                            invisible="state not in ('accepted', 'resolved')" groups="odoo_shield_warden.group_shield_manager"/>
+-                    <field name="state" widget="statusbar" statusbar_visible="open,in_progress,resolved"/>
+-                </header>
+-                <sheet>
+-                    <div class="oe_title">
+-                        <h1><field name="name"/></h1>
+-                    </div>
+-                    <group>
+-                        <group>
+-                            <field name="severity"/>
+-                            <field name="status"/>
+-                            <field name="domain"/>
+-                            <field name="framework_refs"/>
+-                        </group>
+-                        <group>
+-                            <field name="user_id" widget="many2one_avatar_user"/>
+-                            <field name="due_date"/>
+-                            <field name="first_seen"/>
+-                            <field name="last_seen"/>
+-                            <field name="resolved_date" invisible="not resolved_date"/>
+-                        </group>
+-                    </group>
+-                    <notebook>
+-                        <page string="Finding">
+-                            <label for="detail" string="What we found"/>
+-                            <field name="detail" readonly="1"/>
+-                            <label for="remediation" string="How to fix it"/>
+-                            <field name="remediation"/>
+-                            <label for="evidence" string="Evidence" invisible="not evidence"/>
+-                            <field name="evidence" readonly="1" invisible="not evidence"/>
+-                        </page>
+-                        <page string="Risk acceptance">
+-                            <group>
+-                                <field name="acceptance_reason" placeholder="Why this risk is accepted and which compensating controls apply"/>
+-                                <field name="acceptance_expiry"/>
+-                                <field name="accepted_by"/>
+-                            </group>
+-                        </page>
+-                    </notebook>
+-                </sheet>
+-                <chatter/>
+-            </form>
+-        </field>
+-    </record>
+-
+-    <record id="view_shield_finding_kanban" model="ir.ui.view">
+-        <field name="name">shield.finding.kanban</field>
+-        <field name="model">shield.finding</field>
+-        <field name="arch" type="xml">
+-            <kanban default_group_by="state" create="false" group_create="false" records_draggable="false">
+-                <templates>
+-                    <t t-name="card">
+-                        <field name="name" class="fw-bold"/>
+-                        <div class="d-flex justify-content-between mt-1">
+-                            <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"
+-                                   decoration-warning="severity == 'medium'"/>
+-                            <field name="user_id" widget="many2one_avatar_user"/>
+-                        </div>
+-                    </t>
+-                </templates>
+-            </kanban>
+-        </field>
+-    </record>
+-
+-    <record id="view_shield_finding_pivot" model="ir.ui.view">
+-        <field name="name">shield.finding.pivot</field>
+-        <field name="model">shield.finding</field>
+-        <field name="arch" type="xml">
+-            <pivot string="Findings">
+-                <field name="domain" type="row"/>
+-                <field name="severity" type="col"/>
+-            </pivot>
+-        </field>
+-    </record>
+-
+-    <record id="view_shield_finding_search" model="ir.ui.view">
+-        <field name="name">shield.finding.search</field>
+-        <field name="model">shield.finding</field>
+-        <field name="arch" type="xml">
+-            <search>
+-                <field name="name"/>
+-                <field name="user_id"/>
+-                <filter name="active_findings" string="Active" domain="[('state', 'in', ('open', 'in_progress'))]"/>
+-                <filter name="accepted" string="Risk accepted" domain="[('state', '=', 'accepted')]"/>
+-                <filter name="resolved" string="Resolved" domain="[('state', '=', 'resolved')]"/>
+-                <separator/>
+-                <filter name="critical_high" string="Critical &amp; high" domain="[('severity', 'in', ('critical', 'high'))]"/>
+-                <filter name="fixable" string="One-click fix" domain="[('control_id.code', 'in', ('mfa_enforced', 'password_policy', 'dormant_users', 'signup_open', 'login_throttling', 'template_editors', 'payment_hold'))]"/>
+-                <filter name="mine" string="My findings" domain="[('user_id', '=', uid)]"/>
+-                <group>
+-                    <filter name="group_domain" string="Domain" context="{'group_by': 'domain'}"/>
+-                    <filter name="group_severity" string="Severity" context="{'group_by': 'severity'}"/>
+-                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+-                    <filter name="group_owner" string="Owner" context="{'group_by': 'user_id'}"/>
+-                </group>
+-            </search>
+-        </field>
+-    </record>
+-
+-    <record id="action_shield_findings" model="ir.actions.act_window">
+-        <field name="name">Findings</field>
+-        <field name="res_model">shield.finding</field>
+-        <field name="view_mode">list,kanban,pivot,form</field>
+-        <field name="context">{'search_default_active_findings': 1}</field>
+-        <field name="help" type="html">
+-            <p class="o_view_nocontent_smiling_face">No open findings</p>
+-            <p>Findings appear when an assessment detects a failing control and resolve themselves once it passes.</p>
+-        </field>
+-    </record>
+-
+-    <record id="action_shield_risk_register" model="ir.actions.act_window">
+-        <field name="name">Risk Register</field>
+-        <field name="res_model">shield.finding</field>
+-        <field name="view_mode">list,form</field>
+-        <field name="domain">[('state', '=', 'accepted')]</field>
+-        <field name="help" type="html">
+-            <p class="o_view_nocontent_smiling_face">No accepted risks</p>
+-            <p>Accepted risks need a justification and an expiry date; they reopen automatically when they expire.</p>
+-        </field>
+-    </record>
+-</odoo>
++<?xml version="1.0" encoding="utf-8"?>
++<odoo>
++    <record id="view_shield_finding_list" model="ir.ui.view">
++        <field name="name">shield.finding.list</field>
++        <field name="model">shield.finding</field>
++        <field name="arch" type="xml">
++            <tree create="false" decoration-muted="state == 'resolved'" decoration-info="state == 'accepted'">
++                <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"
++                       decoration-warning="severity == 'medium'"/>
++                <field name="name"/>
++                <field name="domain"/>
++                <field name="status" optional="hide"/>
++                <field name="state" widget="badge" decoration-danger="state == 'open'"
++                       decoration-warning="state == 'in_progress'" decoration-info="state == 'accepted'"
++                       decoration-success="state == 'resolved'"/>
++                <field name="user_id" widget="many2one_avatar_user"/>
++                <field name="due_date"/>
++                <field name="has_fix" string="Fix"/>
++                <field name="last_seen" optional="hide"/>
++                <field name="framework_refs" optional="hide"/>
++            </tree>
++        </field>
++    </record>
++
++    <record id="view_shield_finding_form" model="ir.ui.view">
++        <field name="name">shield.finding.form</field>
++        <field name="model">shield.finding</field>
++        <field name="arch" type="xml">
++            <form create="false">
++                <header>
++                    <button name="action_apply_fix" type="object" string="Apply hardening" class="btn-primary"
++                            invisible="not has_fix or state == 'resolved'" groups="base.group_system"
++                            confirm="This changes the production configuration and is logged in the chatter. Continue?"/>
++                    <button name="action_start" type="object" string="Start remediation"
++                            invisible="state != 'open'" groups="odoo_shield_warden.group_shield_manager"/>
++                    <button name="action_accept_risk" type="object" string="Accept risk"
++                            invisible="state in ('accepted', 'resolved')" groups="odoo_shield_warden.group_shield_manager"/>
++                    <button name="action_recheck" type="object" string="Re-check now"
++                            invisible="state == 'resolved'" groups="odoo_shield_warden.group_shield_manager"/>
++                    <button name="action_reopen" type="object" string="Reopen"
++                            invisible="state not in ('accepted', 'resolved')" groups="odoo_shield_warden.group_shield_manager"/>
++                    <field name="state" widget="statusbar" statusbar_visible="open,in_progress,resolved"/>
++                </header>
++                <field name="has_fix" invisible="1"/>
++                <sheet>
++                    <div class="oe_title">
++                        <h1><field name="name"/></h1>
++                    </div>
++                    <group>
++                        <group>
++                            <field name="severity"/>
++                            <field name="status"/>
++                            <field name="domain"/>
++                            <field name="framework_refs"/>
++                        </group>
++                        <group>
++                            <field name="user_id" widget="many2one_avatar_user"/>
++                            <field name="due_date"/>
++                            <field name="first_seen"/>
++                            <field name="last_seen"/>
++                            <field name="resolved_date" invisible="not resolved_date"/>
++                        </group>
++                    </group>
++                    <notebook>
++                        <page string="Finding">
++                            <label for="detail" string="What we found"/>
++                            <field name="detail" readonly="1"/>
++                            <label for="remediation" string="How to fix it"/>
++                            <field name="remediation"/>
++                            <label for="evidence" string="Evidence" invisible="not evidence"/>
++                            <field name="evidence" readonly="1" invisible="not evidence"/>
++                        </page>
++                        <page string="Risk acceptance">
++                            <group>
++                                <field name="acceptance_reason" placeholder="Why this risk is accepted and which compensating controls apply"/>
++                                <field name="acceptance_expiry"/>
++                                <field name="accepted_by"/>
++                            </group>
++                        </page>
++                    </notebook>
++                </sheet>
++                <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
++            </form>
++        </field>
++    </record>
++
++    <record id="view_shield_finding_kanban" model="ir.ui.view">
++        <field name="name">shield.finding.kanban</field>
++        <field name="model">shield.finding</field>
++        <field name="arch" type="xml">
++            <kanban default_group_by="state" create="false" group_create="false" records_draggable="false">
++                <templates>
++                    <t t-name="card">
++                        <field name="name" class="fw-bold"/>
++                        <div class="d-flex justify-content-between mt-1">
++                            <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"
++                                   decoration-warning="severity == 'medium'"/>
++                            <field name="user_id" widget="many2one_avatar_user"/>
++                        </div>
++                    </t>
++                </templates>
++            </kanban>
++        </field>
++    </record>
++
++    <record id="view_shield_finding_pivot" model="ir.ui.view">
++        <field name="name">shield.finding.pivot</field>
++        <field name="model">shield.finding</field>
++        <field name="arch" type="xml">
++            <pivot string="Findings">
++                <field name="domain" type="row"/>
++                <field name="severity" type="col"/>
++            </pivot>
++        </field>
++    </record>
++
++    <record id="view_shield_finding_search" model="ir.ui.view">
++        <field name="name">shield.finding.search</field>
++        <field name="model">shield.finding</field>
++        <field name="arch" type="xml">
++            <search>
++                <field name="name"/>
++                <field name="user_id"/>
++                <filter name="active_findings" string="Active" domain="[('state', 'in', ('open', 'in_progress'))]"/>
++                <filter name="accepted" string="Risk accepted" domain="[('state', '=', 'accepted')]"/>
++                <filter name="resolved" string="Resolved" domain="[('state', '=', 'resolved')]"/>
++                <separator/>
++                <filter name="critical_high" string="Critical &amp; high" domain="[('severity', 'in', ('critical', 'high'))]"/>
++                <filter name="fixable" string="One-click fix" domain="[('control_id.code', 'in', ('mfa_enforced', 'password_policy', 'dormant_users', 'signup_open', 'login_throttling', 'template_editors', 'payment_hold'))]"/>
++                <filter name="mine" string="My findings" domain="[('user_id', '=', uid)]"/>
++                <group>
++                    <filter name="group_domain" string="Domain" context="{'group_by': 'domain'}"/>
++                    <filter name="group_severity" string="Severity" context="{'group_by': 'severity'}"/>
++                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
++                    <filter name="group_owner" string="Owner" context="{'group_by': 'user_id'}"/>
++                </group>
++            </search>
++        </field>
++    </record>
++
++    <record id="action_shield_findings" model="ir.actions.act_window">
++        <field name="name">Findings</field>
++        <field name="res_model">shield.finding</field>
++        <field name="view_mode">tree,kanban,pivot,form</field>
++        <field name="context">{'search_default_active_findings': 1}</field>
++        <field name="help" type="html">
++            <p class="o_view_nocontent_smiling_face">No open findings</p>
++            <p>Findings appear when an assessment detects a failing control and resolve themselves once it passes.</p>
++        </field>
++    </record>
++
++    <record id="action_shield_risk_register" model="ir.actions.act_window">
++        <field name="name">Risk Register</field>
++        <field name="res_model">shield.finding</field>
++        <field name="view_mode">tree,form</field>
++        <field name="domain">[('state', '=', 'accepted')]</field>
++        <field name="help" type="html">
++            <p class="o_view_nocontent_smiling_face">No accepted risks</p>
++            <p>Accepted risks need a justification and an expiry date; they reopen automatically when they expire.</p>
++        </field>
++    </record>
++</odoo>
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden/views/shield_framework_views.xml odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_framework_views.xml
+--- odoo-shield-warden/addons/odoo_shield_warden/views/shield_framework_views.xml	2026-10-30 15:04:58.368508600 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_framework_views.xml	2026-11-05 18:18:18.500131800 -0300
+@@ -4,11 +4,11 @@
+         <field name="name">shield.framework.list</field>
+         <field name="model">shield.framework</field>
+         <field name="arch" type="xml">
+-            <list create="false">
++            <tree create="false">
+                 <field name="name"/>
+                 <field name="code"/>
+                 <field name="version"/>
+-            </list>
++            </tree>
+         </field>
+     </record>
+ 
+@@ -24,11 +24,11 @@
+                         <field name="version"/>
+                     </group>
+                     <field name="requirement_ids">
+-                        <list>
++                        <tree>
+                             <field name="ref"/>
+                             <field name="name"/>
+                             <field name="control_ids" widget="many2many_tags"/>
+-                        </list>
++                        </tree>
+                     </field>
+                 </sheet>
+             </form>
+@@ -38,6 +38,6 @@
+     <record id="action_shield_frameworks" model="ir.actions.act_window">
+         <field name="name">Frameworks</field>
+         <field name="res_model">shield.framework</field>
+-        <field name="view_mode">list,form</field>
++        <field name="view_mode">tree,form</field>
+     </record>
+ </odoo>
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden/views/shield_login_log_views.xml odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_login_log_views.xml
+--- odoo-shield-warden/addons/odoo_shield_warden/views/shield_login_log_views.xml	2026-10-30 16:54:41.255276500 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden/views/shield_login_log_views.xml	2026-11-05 18:18:18.514371700 -0300
+@@ -4,12 +4,12 @@
+         <field name="name">shield.login.log.list</field>
+         <field name="model">shield.login.log</field>
+         <field name="arch" type="xml">
+-            <list create="false" edit="false" delete="false" decoration-danger="not success" decoration-success="success">
++            <tree create="false" edit="false" delete="false" decoration-danger="not success" decoration-success="success">
+                 <field name="create_date" string="When"/>
+                 <field name="login"/>
+                 <field name="ip"/>
+                 <field name="success"/>
+-            </list>
++            </tree>
+         </field>
+     </record>
+ 
+@@ -32,7 +32,7 @@
+     <record id="action_shield_login_log" model="ir.actions.act_window">
+         <field name="name">Login Attempts</field>
+         <field name="res_model">shield.login.log</field>
+-        <field name="view_mode">list</field>
++        <field name="view_mode">tree</field>
+         <field name="help" type="html">
+             <p class="o_view_nocontent_smiling_face">No failed logins recorded</p>
+             <p>Failed logins (web, XML-RPC, JSON-RPC) and successes right after failures are recorded here.</p>
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden_finance/__manifest__.py odoo-shield-warden-port/v17/addons/odoo_shield_warden_finance/__manifest__.py
+--- odoo-shield-warden/addons/odoo_shield_warden_finance/__manifest__.py	2026-11-05 18:01:46.754582000 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden_finance/__manifest__.py	2026-11-05 18:07:51.914652100 -0300
+@@ -13,7 +13,7 @@
+ * ROSI view: net benefit, ROSI and break-even chance from the money at risk; the licence price is a system parameter.
+ * Alerts grouped into cases per bank account, payment or bill; every case carries an amount in company currency and a review workflow, so assessments report money at risk.
+ """,
+-    "version": "18.0.1.3.0",
++    "version": "17.0.1.3.0",
+     "category": "Productivity/Security",
+     "author": "Odoo Shield Warden",
+     "license": "OPL-1",
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden_finance/models/shield_check.py odoo-shield-warden-port/v17/addons/odoo_shield_warden_finance/models/shield_check.py
+--- odoo-shield-warden/addons/odoo_shield_warden_finance/models/shield_check.py	2026-10-30 16:55:01.504886300 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden_finance/models/shield_check.py	2026-11-05 18:18:18.533286600 -0300
+@@ -1,539 +1,539 @@
+-"""Money-at-risk checks: effective-permission conflicts and transaction monitoring."""
+-
+-import hashlib
+-import re
+-from collections import defaultdict, namedtuple
+-from difflib import SequenceMatcher
+-from datetime import timedelta
+-
+-from odoo import SUPERUSER_ID, _, fields, models
+-from odoo.tools import format_amount, html2plaintext
+-
+-from odoo.addons.odoo_shield_warden.models.shield_check import listing, result
+-from odoo.addons.odoo_shield_warden.models.shield_control import SEVERITY_RANK
+-
+-LOOKBACK_DAYS = 365
+-BANK_CHANGE_WINDOW_DAYS = 30
+-PAID_STATES = ("in_process", "paid")
+-UNTRACKED_WRITE_TOLERANCE = timedelta(seconds=60)
+-NUMBER_ATTRIBUTION_TOLERANCE = timedelta(seconds=5)
+-HistoryRow = namedtuple("HistoryRow", "date user field old_char new_char new_int source")
+-
+-CAPABILITIES = {
+-    "bank_edit": "edit vendor bank accounts",
+-    "bank_trust": "mark bank accounts as trusted",
+-    "bill": "enter vendor bills",
+-    "pay": "create payments",
+-    "user_admin": "create users and assign rights",
+-}
+-# Model and access mode behind each ACL-based capability (bank_trust is a group, not an ACL).
+-CAPABILITY_ACCESS = {
+-    "bank_edit": ("res.partner.bank", "write"), "bill": ("account.move", "create"),
+-    "pay": ("account.payment", "create"), "user_admin": ("res.users", "create"),
+-}
+-# (code, required capabilities, severity, why it matters)
+-TOXIC_COMBOS = [
+-    ("redirect_and_pay", ("bank_edit", "bank_trust", "pay"), "critical",
+-     "can change a vendor's bank account, mark it trusted and pay it alone, which defeats Odoo's "
+-     "bank-account validation safeguard"),
+-    ("escalate_and_pay", ("user_admin", "pay"), "critical",
+-     "can grant themselves any right, then pay"),
+-    ("bill_and_pay", ("bill", "pay"), "high",
+-     "can enter a vendor bill and pay it without a second person"),
+-]
+-
+-
+-class ShieldCheck(models.AbstractModel):
+-    _inherit = "shield.check"
+-
+-    # -- helpers -------------------------------------------------------------------
+-
+-    def _since(self):
+-        return fields.Datetime.now() - timedelta(days=LOOKBACK_DAYS)
+-
+-    def _money(self, amount):
+-        return format_amount(self.env, amount, self.env.company.currency_id)
+-
+-    def _outbound_payments(self):
+-        return self.env["account.payment"].sudo().search([
+-            ("payment_type", "=", "outbound"), ("state", "in", PAID_STATES),
+-            ("date", ">=", self._since().date()), ("company_id", "in", self.env.companies.ids)])
+-
+-    def _effective_capabilities(self, user):
+-        access = self.env["ir.model.access"].with_user(user)
+-        caps = set()
+-        if access.check("res.partner.bank", "write", raise_exception=False):
+-            caps.add("bank_edit")
+-        if user.has_group("account.group_validate_bank_account") or user.has_group("base.group_system"):
+-            caps.add("bank_trust")
+-        if access.check("account.move", "create", raise_exception=False):
+-            caps.add("bill")
+-        if access.check("account.payment", "create", raise_exception=False):
+-            caps.add("pay")
+-        if access.check("res.users", "create", raise_exception=False):
+-            caps.add("user_admin")
+-        return caps
+-
+-    def _restricted_capabilities(self, user, caps):
+-        """{capability: rule names} for capabilities narrowed by group-specific record rules (K12).
+-
+-        Global rules (usually multi-company isolation) apply to everyone and are not a segregation control;
+-        a rule attached to one of the user's groups is, e.g. "clerks may only pay from journal X".
+-        """
+-        out = {}
+-        for cap in caps:
+-            model, mode = CAPABILITY_ACCESS.get(cap, (None, None))
+-            if not model:
+-                continue
+-            rules = self.env["ir.rule"].sudo().search([
+-                ("model_id.model", "=", model), (f"perm_{mode}", "=", True), ("groups", "in", user.groups_id.ids)])
+-            if rules:
+-                out[cap] = rules.mapped("name")
+-        return out
+-
+-    def _sod_conflicts(self):
+-        """Every internal user holding a toxic combination, with the payments they actually made."""
+-        users = self.env["res.users"].sudo().search([("share", "=", False), ("id", "!=", SUPERUSER_ID)])
+-        payments = self._outbound_payments()
+-        paid_by = defaultdict(lambda: [0, 0.0])
+-        for pay in payments:
+-            paid_by[pay.create_uid.id][0] += 1
+-            paid_by[pay.create_uid.id][1] += abs(pay.amount_company_currency_signed)
+-        conflicts = []
+-        for user in users:
+-            caps = self._effective_capabilities(user)
+-            restricted = self._restricted_capabilities(user, caps)
+-            for code, needed, severity, _why in TOXIC_COMBOS:
+-                if set(needed) <= caps:
+-                    count, amount = paid_by[user.id]
+-                    limits = sorted({name for c in needed for name in restricted.get(c, [])})
+-                    text = ", ".join(CAPABILITIES[c] for c in needed)
+-                    if limits:
+-                        # Record rules narrow the conflict to some records: still a gap, one level lower.
+-                        severity = {"critical": "high", "high": "medium"}.get(severity, severity)
+-                        text += _(" (limited by record rules: %s)", ", ".join(limits))
+-                    conflicts.append({
+-                        "user_id": user.id, "combo": code, "severity": severity,
+-                        "severity_rank": SEVERITY_RANK[severity], "capabilities": text,
+-                        "payment_count": count, "exposure": amount,
+-                    })
+-        return conflicts
+-
+-    def _sod_result(self, code):
+-        combo = next(c for c in TOXIC_COMBOS if c[0] == code)
+-        hits = [c for c in self._sod_conflicts() if c["combo"] == code]
+-        if not hits:
+-            return result("pass", _("No internal user holds this combination of rights."))
+-        users = self.env["res.users"].browse([h["user_id"] for h in hits])
+-        exercised = [h for h in hits if h["payment_count"]]
+-        total = sum(h["exposure"] for h in hits)
+-        who = listing(f"{u.login} ({self._money(h['exposure'])})" for u, h in zip(users, hits))
+-        detail = _("%(n)s user(s) %(why)s: %(who)s.", n=len(hits), why=combo[3], who=who)
+-        if exercised:
+-            detail += " " + _("%(k)s of them created %(amt)s of payments in the last 12 months.",
+-                              k=len(exercised), amt=self._money(total))
+-            return result("fail", detail, severity=combo[2])
+-        # Possible but never exercised: still a gap, one level lower.
+-        lower = {"critical": "high", "high": "medium"}.get(combo[2], combo[2])
+-        return result("fail", detail + " " + _("No payments made by them yet."), severity=lower)
+-
+-    def _check_sod_redirect_and_pay(self):
+-        return self._sod_result("redirect_and_pay")
+-
+-    def _check_sod_escalate_and_pay(self):
+-        return self._sod_result("escalate_and_pay")
+-
+-    def _check_sod_bill_and_pay(self):
+-        return self._sod_result("bill_and_pay")
+-
+-    # -- transaction monitoring -------------------------------------------------------
+-
+-    def _bank_history(self, banks):
+-        """{bank_id: [HistoryRow]} for account-number and trust changes.
+-
+-        Odoo records them twice: as tracking on the bank account itself, and as a "Bank Account #id updated"
+-        message on the owner's chatter. API callers can suppress the first with ``tracking_disable``;
+-        the second is written by res.partner.bank.write() regardless. Reading both, and noting which
+-        source each row came from, catches the suppression.
+-        """
+-        banks = banks.sudo()
+-        field_ids = {self.env["ir.model.fields"]._get("res.partner.bank", f).id: f
+-                     for f in ("acc_number", "allow_out_payment")}
+-        values = self.env["mail.tracking.value"].sudo().search([
+-            ("field_id", "in", list(field_ids)), "|",
+-            "&", ("mail_message_id.model", "=", "res.partner.bank"), ("mail_message_id.res_id", "in", banks.ids),
+-            "&", ("mail_message_id.model", "=", "res.partner"), ("mail_message_id.res_id", "in", banks.partner_id.ids)])
+-        by_partner = defaultdict(list)
+-        for bank in banks:
+-            by_partner[bank.partner_id.id].append(bank.id)
+-        history = defaultdict(list)
+-        for tv in values:
+-            msg = tv.mail_message_id
+-            if msg.model == "res.partner.bank":
+-                bank_id, source = msg.res_id, "bank"
+-            else:
+-                ref = re.search(r"#(\d+)", html2plaintext(msg.body or ""))
+-                candidates = by_partner[msg.res_id]
+-                bank_id = int(ref.group(1)) if ref and int(ref.group(1)) in candidates else \
+-                    (candidates[0] if len(candidates) == 1 else None)
+-                source = "owner"
+-            if bank_id:
+-                history[bank_id].append(HistoryRow(msg.date, msg.create_uid, field_ids[tv.field_id.id],
+-                                                   tv.old_value_char, tv.new_value_char, tv.new_value_integer, source))
+-        return history
+-
+-    def _tracking(self, banks, field_name):
+-        """{bank_id: [(date, user, new_value_integer)]} for one field, de-duplicated across both sources."""
+-        out = defaultdict(list)
+-        for bank_id, rows in self._bank_history(banks).items():
+-            seen = set()
+-            for row in sorted(rows, key=lambda r: r.date):
+-                key = (row.date.replace(microsecond=0), row.new_char, row.new_int)
+-                if row.field == field_name and key not in seen:
+-                    seen.add(key)
+-                    out[bank_id].append((row.date, row.user, row.new_int))
+-        return out
+-
+-    def _account_changes(self, banks):
+-        """{bank_id: [(date, user, kind)]} where kind is 'created' or 'changed'."""
+-        changes = defaultdict(list)
+-        for bank in banks:
+-            changes[bank.id].append((bank.create_date, bank.create_uid, "created"))
+-        for bank_id, rows in self._tracking(banks, "acc_number").items():
+-            changes[bank_id] += [(date, user, "changed") for date, user, _v in rows]
+-        return changes
+-
+-    def _events_result(self, events, label):
+-        if not events:
+-            return result("pass", _("No %s in the last 12 months.", label))
+-        total = sum(events.mapped("amount"))
+-        worst = min(events.mapped("severity"), key=lambda s: SEVERITY_RANK[s])
+-        ranked = events.sorted(lambda e: (SEVERITY_RANK[e.severity], -e.amount))
+-        return result("fail", _("%(n)s %(label)s to review, touching %(amt)s: %(items)s",
+-                                n=len(events), label=label, amt=self._money(total),
+-                                items=listing(ranked.mapped("detail"), limit=3)),
+-                      "\n".join(f"[event {e.id}] {e.detail}" for e in ranked), severity=worst)
+-
+-    def _check_ccm_bank_change_payment(self):
+-        payments = self._outbound_payments().filtered("partner_bank_id")
+-        changes = self._account_changes(payments.partner_bank_id)
+-        window = timedelta(days=BANK_CHANGE_WINDOW_DAYS)
+-        found = []
+-        for pay in payments:
+-            # Chatter dates use the wall clock, record dates the transaction start: allow for the gap.
+-            recent = [c for c in changes[pay.partner_bank_id.id]
+-                      if c[0] <= pay.create_date + UNTRACKED_WRITE_TOLERANCE and pay.create_date - c[0] <= window]
+-            if not recent:
+-                continue
+-            date, changer, kind = max(recent, key=lambda c: c[0])
+-            same = changer == pay.create_uid
+-            days = max((pay.create_date - date).days, 0)
+-            severity = ("critical" if same else "high") if kind == "changed" else ("high" if same else "medium")
+-            what = _("account number changed") if kind == "changed" else _("new bank account")
+-            found.append({
+-                "key": f"bank_change_payment:{pay.id}", "severity": severity,
+-                "detail": _("%(pay)s to %(vendor)s: %(what)s by %(who)s %(d)s day(s) before payment by %(payer)s",
+-                            pay=pay.name, vendor=pay.partner_id.display_name, what=what, who=changer.login,
+-                            d=days, payer=pay.create_uid.login),
+-                "event_date": pay.create_date, "actor_id": pay.create_uid.id, "partner_id": pay.partner_id.id,
+-                "payment_id": pay.id, "payment_ids": [(6, 0, pay.ids)], "bank_id": pay.partner_bank_id.id,
+-                "company_id": pay.company_id.id,
+-                "amount": abs(pay.amount_company_currency_signed),
+-            })
+-        events = self.env["shield.risk.event"]._upsert("bank_change_payment", found)
+-        return self._events_result(events, _("payment(s) to recently changed bank accounts"))
+-
+-    def _check_ccm_self_trusted_bank(self):
+-        banks = self.env["res.partner.bank"].sudo().search([("allow_out_payment", "=", True)])
+-        changes = self._account_changes(banks)
+-        trusts = self._tracking(banks, "allow_out_payment")
+-        payments = self._outbound_payments()
+-        found = []
+-        for bank in banks:
+-            trust_rows = [(d, u) for d, u, v in trusts.get(bank.id, []) if v]
+-            if not trust_rows:
+-                # Trusted at creation: the creator trusted their own entry.
+-                trust_rows = [(bank.create_date, bank.create_uid)]
+-            trust_date, truster = max(trust_rows, key=lambda r: r[0])
+-            prior = [c for c in changes[bank.id] if c[0] <= trust_date]
+-            if truster.id == SUPERUSER_ID or not prior:
+-                continue
+-            _date, changer, kind = max(prior, key=lambda c: c[0])
+-            if changer != truster:
+-                continue
+-            paid = payments.filtered(lambda p, b=bank, t=trust_date: p.partner_bank_id == b and p.create_date >= t)
+-            amount = sum(abs(p.amount_company_currency_signed) for p in paid)
+-            found.append({
+-                "key": f"self_trusted_bank:{bank.id}:{fields.Datetime.to_string(trust_date)}",
+-                "severity": "critical" if amount else "high",
+-                "detail": _("%(acc)s of %(vendor)s %(kind)s and trusted by the same person (%(who)s); %(n)s payment(s) since",
+-                            acc=bank.acc_number, vendor=bank.partner_id.display_name,
+-                            kind=_("created") if kind == "created" else _("changed"), who=truster.login, n=len(paid)),
+-                "event_date": trust_date, "actor_id": truster.id, "partner_id": bank.partner_id.id,
+-                "bank_id": bank.id, "payment_ids": [(6, 0, paid.ids)], "amount": amount,
+-            })
+-        events = self.env["shield.risk.event"]._upsert("self_trusted_bank", found)
+-        return self._events_result(events, _("self-verified bank account(s)"))
+-
+-    def _check_ccm_self_paid_bill(self):
+-        found = []
+-        for pay in self._outbound_payments():
+-            bills = pay.reconciled_bill_ids.filtered(lambda b, p=pay: b.create_uid == p.create_uid)
+-            if not bills:
+-                continue
+-            found.append({
+-                "key": f"self_paid_bill:{pay.id}", "severity": "high",
+-                "detail": _("%(user)s entered %(bills)s and paid it with %(pay)s",
+-                            user=pay.create_uid.login, bills=", ".join(bills.mapped("name")), pay=pay.name),
+-                "event_date": pay.create_date, "actor_id": pay.create_uid.id, "partner_id": pay.partner_id.id,
+-                "payment_id": pay.id, "payment_ids": [(6, 0, pay.ids)], "move_id": bills[:1].id,
+-                "company_id": pay.company_id.id,
+-                "amount": abs(pay.amount_company_currency_signed),
+-            })
+-        events = self.env["shield.risk.event"]._upsert("self_paid_bill", found)
+-        return self._events_result(events, _("bill(s) paid by the person who entered them"))
+-
+-    def _check_ccm_duplicate_bill(self):
+-        bills = self.env["account.move"].sudo().search([
+-            ("move_type", "=", "in_invoice"), ("state", "=", "posted"),
+-            ("payment_state", "!=", "reversed"), ("invoice_date", ">=", self._since().date()),
+-            ("company_id", "in", self.env.companies.ids)], order="id")
+-        buckets = defaultdict(list)
+-        for bill in bills:
+-            # "NW-2291", "nw 2291" and "NW/2291" are the same reference typed differently.
+-            ref = re.sub(r"[^0-9a-z]", "", (bill.ref or "").lower())
+-            buckets[(bill.partner_id.commercial_partner_id.id, bill.currency_id.id,
+-                     round(bill.amount_total, 2), ref or str(bill.invoice_date))].append(bill)
+-        found = []
+-        for group in buckets.values():
+-            original = group[0]
+-            for dup in group[1:]:
+-                found.append({
+-                    "key": f"duplicate_bill:{dup.id}", "severity": "medium",
+-                    "detail": _("%(dup)s duplicates %(orig)s (%(vendor)s, %(amt)s)", dup=dup.name, orig=original.name,
+-                                vendor=dup.partner_id.display_name, amt=self._money(abs(dup.amount_total_signed))),
+-                    "event_date": dup.create_date, "actor_id": dup.create_uid.id, "partner_id": dup.partner_id.id,
+-                    "move_id": dup.id, "company_id": dup.company_id.id, "amount": abs(dup.amount_total_signed),
+-                })
+-        events = self.env["shield.risk.event"]._upsert("duplicate_bill", found)
+-        return self._events_result(events, _("possible duplicate bill(s)"))
+-
+-    # -- anti-forensics and ghost beneficiaries (added after the attack lab) --------------------
+-
+-    def _acc_digest(self, bank):
+-        return hashlib.sha256((bank.sanitized_acc_number or bank.acc_number or "").encode()).hexdigest()
+-
+-    def _check_ccm_untracked_bank_change(self):
+-        """Bank details changed while hiding it: suppressed tracking, no trace at all, or a silent rewrite."""
+-        banks = self.env["res.partner.bank"].sudo().with_context(active_test=False).search([])
+-        history = self._bank_history(banks)
+-        Fingerprint = self.env["shield.bank.fingerprint"].sudo()
+-        prints = {fp.bank_id.id: fp for fp in Fingerprint.search([("bank_id", "in", banks.ids)])}
+-        payments = self._outbound_payments()
+-        now = fields.Datetime.now()
+-        found = []
+-        for bank in banks:
+-            rows = history.get(bank.id, [])
+-            acc_rows = [r for r in rows if r.field == "acc_number"]
+-            logged_on_bank = {r.new_char or "" for r in acc_rows if r.source == "bank"}
+-            suppressed = [r for r in acc_rows if r.source == "owner" and (r.new_char or "") not in logged_on_bank]
+-            last_trace = max([bank.create_date] + [r.date for r in rows])
+-            digest = self._acc_digest(bank)
+-            fp = prints.get(bank.id)
+-            reasons, actor, since = [], bank.write_uid, bank.write_date
+-            if suppressed:
+-                row = max(suppressed, key=lambda r: r.date)
+-                actor, since = row.user, row.date
+-                reasons.append(_("account number changed to %(new)s by %(who)s on %(date)s with the bank account's "
+-                                 "own audit trail switched off (tracking_disable)",
+-                                 new=row.new_char, who=row.user.login, date=fields.Datetime.to_string(row.date)))
+-            elif bank.write_date and bank.write_date - last_trace > UNTRACKED_WRITE_TOLERANCE:
+-                reasons.append(_("modified by %(who)s on %(date)s without any audit-trail entry",
+-                                 who=bank.write_uid.login, date=fields.Datetime.to_string(bank.write_date)))
+-            if fp and fp.acc_hash != digest and not any((r.new_char or "") == bank.acc_number for r in acc_rows):
+-                reasons.append(_("its number no longer matches the one Shield fingerprinted on %s, and no change "
+-                                 "was logged anywhere", fields.Datetime.to_string(fp.last_seen)))
+-            if fp:
+-                fp.write({"acc_hash": digest, "last_seen": now})
+-            else:
+-                Fingerprint.create({"bank_id": bank.id, "acc_hash": digest, "last_seen": now})
+-            if not reasons:
+-                continue
+-            # Record timestamps use the transaction start, chatter uses the wall clock: allow for the gap.
+-            paid = payments.filtered(lambda p, b=bank, s=since: p.partner_bank_id == b
+-                                     and p.create_date >= s - UNTRACKED_WRITE_TOLERANCE)
+-            found.append({
+-                "key": f"untracked_bank_change:{bank.id}:{digest[:16]}", "severity": "critical",
+-                "detail": _("%(acc)s of %(owner)s: %(why)s; %(n)s payment(s) since",
+-                            acc=bank.acc_number, owner=bank.partner_id.display_name, why="; ".join(reasons),
+-                            n=len(paid)),
+-                "event_date": since, "actor_id": actor.id, "partner_id": bank.partner_id.id, "bank_id": bank.id,
+-                "payment_ids": [(6, 0, paid.ids)], "amount": sum(abs(p.amount_company_currency_signed) for p in paid),
+-            })
+-        events = self.env["shield.risk.event"]._upsert("untracked_bank_change", found)
+-        return self._events_result(events, _("bank account change(s) hidden from the audit trail"))
+-
+-    @staticmethod
+-    def _norm_acc(number):
+-        return re.sub(r"[^0-9A-Za-z]", "", number or "").upper()
+-
+-    def _number_timeline(self, banks):
+-        """{bank_id: [(from_date, normalized number, as typed)]}: every number each bank record has held.
+-
+-        Payments point at the bank *record*, whose number can change later. Judging a payment by the
+-        number the record held when it was paid stops a fraudster from erasing the trail by changing
+-        the number again.
+-        """
+-        history = self._bank_history(banks)
+-        timeline = {}
+-        for bank in banks:
+-            rows, seen = [], set()
+-            for row in sorted((r for r in history.get(bank.id, []) if r.field == "acc_number"), key=lambda r: r.date):
+-                key = (row.date.replace(microsecond=0), row.new_char)
+-                if key not in seen:
+-                    seen.add(key)
+-                    rows.append(row)
+-            steps = []
+-            if rows and rows[0].old_char:
+-                steps.append((bank.create_date, self._norm_acc(rows[0].old_char), rows[0].old_char))
+-            steps += [(r.date, self._norm_acc(r.new_char), r.new_char) for r in rows]
+-            if not steps:
+-                steps = [(bank.create_date, self._norm_acc(bank.acc_number), bank.acc_number)]
+-            if steps[-1][1] != self._norm_acc(bank.acc_number):  # changed without any trace
+-                steps.append((bank.write_date, self._norm_acc(bank.acc_number), bank.acc_number))
+-            timeline[bank.id] = steps
+-        return timeline
+-
+-    def _number_at(self, steps, when):
+-        # Small tolerance: record time is the transaction start, chatter time the wall clock.
+-        held = [s for s in steps if s[0] <= when + NUMBER_ATTRIBUTION_TOLERANCE]
+-        return (held[-1] if held else steps[0])[1]
+-
+-    def _check_ccm_shared_bank_account(self):
+-        """One IBAN on several unrelated contacts, now or in the past: ghost vendors and payroll diversion."""
+-        banks = self.env["res.partner.bank"].sudo().with_context(active_test=False).search([])
+-        timeline = self._number_timeline(banks)
+-        holders, typed, banks_by_number = defaultdict(set), {}, defaultdict(set)
+-        for bank in banks:
+-            for _date, number, as_typed in timeline[bank.id]:
+-                if number:
+-                    holders[number].add(bank.partner_id.commercial_partner_id.id)
+-                    banks_by_number[number].add(bank.id)
+-                    typed.setdefault(number, as_typed)
+-        staff = self.env["res.users"].sudo().search([("share", "=", False)])
+-        paid_by_number = defaultdict(lambda: self.env["account.payment"].sudo())
+-        for pay in self._outbound_payments().filtered("partner_bank_id"):
+-            steps = timeline.get(pay.partner_bank_id.id)
+-            if steps:
+-                paid_by_number[self._number_at(steps, pay.create_date)] |= pay
+-        found = []
+-        for number, partner_ids in holders.items():
+-            if len(partner_ids) < 2:
+-                continue
+-            partners = self.env["res.partner"].sudo().browse(sorted(partner_ids))
+-            personal = partners.filtered(lambda p: p in staff.partner_id or (
+-                not p.is_company and p.create_uid in staff and p.create_uid.id != SUPERUSER_ID))
+-            current = banks.filtered(lambda b, n=number: self._norm_acc(b.acc_number) == n)
+-            paid = paid_by_number[number]
+-            names = ", ".join(p.display_name + (_(" (created by %s)", p.create_uid.login) if p in personal else "")
+-                              for p in partners)
+-            history_note = "" if len(current.partner_id.commercial_partner_id) == len(partners) else                 _(" (some no longer hold it: the number was changed afterwards)")
+-            holder_banks = self.env["res.partner.bank"].sudo().browse(sorted(banks_by_number[number]))
+-            found.append({
+-                "key": f"shared_bank_account:{number}", "severity": "critical" if personal else "high",
+-                "detail": _("%(acc)s is or was registered on %(n)s different contacts: %(who)s%(note)s; "
+-                            "%(p)s payment(s) made to it", acc=typed[number], n=len(partners), who=names,
+-                            note=history_note, p=len(paid)),
+-                "event_date": max(holder_banks.mapped("create_date")),
+-                "actor_id": holder_banks.sorted("create_date")[-1].create_uid.id,
+-                "partner_id": partners[0].id, "bank_id": (current or holder_banks)[:1].id,
+-                "payment_ids": [(6, 0, paid.ids)], "amount": sum(abs(p.amount_company_currency_signed) for p in paid),
+-            })
+-        events = self.env["shield.risk.event"]._upsert("shared_bank_account", found)
+-        return self._events_result(events, _("bank account(s) shared between unrelated contacts"))
+-
+-    # -- cycle 3: prevention and vendor-master fraud ----------------------------------------------
+-
+-    def _check_payment_hold(self):
+-        mode = self._param("shield.payment_hold", "off")
+-        days = int(self._param("shield.payment_hold_days", 30) or 30)
+-        if mode != "enforce":
+-            return result("fail", _("Payments to freshly changed bank accounts are only detected, not stopped. "
+-                                    "Turn on Shield's payment hold (one-click fix) to require a second person to "
+-                                    "verify any account number set in the last %s days before money leaves.", days))
+-        held = self.env["res.partner.bank"].sudo().search([]).filtered(lambda b: b._shield_hold_reason())
+-        return result("pass", _("Payment hold enforced (%(d)s days); %(n)s bank account(s) currently held for "
+-                                "verification.", d=days, n=len(held)),
+-                      listing(f"{b.acc_number} ({b.partner_id.display_name})" for b in held))
+-
+-    def _fix_payment_hold(self):
+-        self._set_param("shield.payment_hold", "enforce", False)
+-        days = self._param("shield.payment_hold_days", 30)
+-        return _("Payment hold enforced: payments to bank accounts set or changed in the last %s days now need "
+-                 "second-person verification ('Verify with Shield' on the bank account).", days), False
+-
+-    @staticmethod
+-    def _vendor_key(name):
+-        """Normalize a vendor name so 'N0rthwind Logistics Ltd.' and 'Northwind Logistics' compare equal."""
+-        text = (name or "").lower().translate(str.maketrans("0134578@$", "oleastbas"))
+-        text = re.sub(r"\b(ltd|llc|inc|gmbh|sarl|srl|sas|sa|bv|nv|co|corp|company|limited|plc|ag|spa)\b", " ", text)
+-        return re.sub(r"[^a-z]", "", text)
+-
+-    def _vendors(self):
+-        return self.env["res.partner"].sudo().search([("supplier_rank", ">", 0), ("parent_id", "=", False)])
+-
+-    def _check_ccm_lookalike_vendor(self):
+-        vendors = self._vendors()
+-        recent = vendors.filtered(lambda v: v.create_date >= self._since())
+-        payments = self._outbound_payments()
+-        found = []
+-        for new in recent:
+-            key = self._vendor_key(new.name)
+-            if len(key) < 5:
+-                continue
+-            for old in vendors:
+-                if old == new or old.create_date > new.create_date:
+-                    continue
+-                other = self._vendor_key(old.name)
+-                matcher = SequenceMatcher(None, key, other)
+-                if matcher.real_quick_ratio() < 0.88 or matcher.ratio() < 0.88:
+-                    continue
+-                paid = payments.filtered(lambda p, n=new: p.partner_id.commercial_partner_id == n)
+-                found.append({
+-                    "key": f"lookalike_vendor:{new.id}:{old.id}",
+-                    "severity": "critical" if paid else "high",
+-                    "detail": _("'%(new)s' (created by %(who)s on %(date)s) imitates existing vendor '%(old)s'; "
+-                                "%(n)s payment(s) to it", new=new.name, who=new.create_uid.login,
+-                                date=fields.Date.to_string(new.create_date.date()), old=old.name, n=len(paid)),
+-                    "event_date": new.create_date, "actor_id": new.create_uid.id, "partner_id": new.id,
+-                    "bank_id": new.bank_ids[:1].id, "payment_ids": [(6, 0, paid.ids)],
+-                    "amount": sum(abs(p.amount_company_currency_signed) for p in paid),
+-                })
+-                break
+-        events = self.env["shield.risk.event"]._upsert("lookalike_vendor", found)
+-        return self._events_result(events, _("lookalike vendor(s)"))
+-
+-    def _check_ccm_new_vendor_fast_payment(self):
+-        window = timedelta(days=7)
+-        found = []
+-        for pay in self._outbound_payments():
+-            vendor = pay.partner_id.commercial_partner_id
+-            if not vendor.create_date or not (timedelta(0) <= pay.create_date - vendor.create_date
+-                                              + UNTRACKED_WRITE_TOLERANCE <= window):
+-                continue
+-            creators = vendor.create_uid | pay.partner_bank_id.create_uid
+-            if pay.create_uid not in creators or pay.create_uid.id == SUPERUSER_ID:
+-                continue
+-            same_bank = pay.partner_bank_id.create_uid == pay.create_uid
+-            found.append({
+-                "key": f"new_vendor_fast_payment:{pay.id}", "severity": "critical" if same_bank else "high",
+-                "detail": _("%(who)s created %(vendor)s%(bank)s and paid it %(d)s day(s) later (%(pay)s)",
+-                            who=pay.create_uid.login, vendor=vendor.display_name,
+-                            bank=_(" and its bank account") if same_bank else "",
+-                            d=max((pay.create_date - vendor.create_date).days, 0), pay=pay.name),
+-                "event_date": pay.create_date, "actor_id": pay.create_uid.id, "partner_id": vendor.id,
+-                "payment_id": pay.id, "payment_ids": [(6, 0, pay.ids)], "company_id": pay.company_id.id,
+-                "amount": abs(pay.amount_company_currency_signed),
+-            })
+-        events = self.env["shield.risk.event"]._upsert("new_vendor_fast_payment", found)
+-        return self._events_result(events, _("new vendor(s) paid within a week by their creator"))
++"""Money-at-risk checks: effective-permission conflicts and transaction monitoring."""
++
++import hashlib
++import re
++from collections import defaultdict, namedtuple
++from difflib import SequenceMatcher
++from datetime import timedelta
++
++from odoo import SUPERUSER_ID, _, fields, models
++from odoo.tools import format_amount, html2plaintext
++
++from odoo.addons.odoo_shield_warden.models.shield_check import listing, result
++from odoo.addons.odoo_shield_warden.models.shield_control import SEVERITY_RANK
++
++LOOKBACK_DAYS = 365
++BANK_CHANGE_WINDOW_DAYS = 30
++PAID_STATES = ("in_process", "paid")
++UNTRACKED_WRITE_TOLERANCE = timedelta(seconds=60)
++NUMBER_ATTRIBUTION_TOLERANCE = timedelta(seconds=5)
++HistoryRow = namedtuple("HistoryRow", "date user field old_char new_char new_int source")
++
++CAPABILITIES = {
++    "bank_edit": "edit vendor bank accounts",
++    "bank_trust": "mark bank accounts as trusted",
++    "bill": "enter vendor bills",
++    "pay": "create payments",
++    "user_admin": "create users and assign rights",
++}
++# Model and access mode behind each ACL-based capability (bank_trust is a group, not an ACL).
++CAPABILITY_ACCESS = {
++    "bank_edit": ("res.partner.bank", "write"), "bill": ("account.move", "create"),
++    "pay": ("account.payment", "create"), "user_admin": ("res.users", "create"),
++}
++# (code, required capabilities, severity, why it matters)
++TOXIC_COMBOS = [
++    ("redirect_and_pay", ("bank_edit", "bank_trust", "pay"), "critical",
++     "can change a vendor's bank account, mark it trusted and pay it alone, which defeats Odoo's "
++     "bank-account validation safeguard"),
++    ("escalate_and_pay", ("user_admin", "pay"), "critical",
++     "can grant themselves any right, then pay"),
++    ("bill_and_pay", ("bill", "pay"), "high",
++     "can enter a vendor bill and pay it without a second person"),
++]
++
++
++class ShieldCheck(models.AbstractModel):
++    _inherit = "shield.check"
++
++    # -- helpers -------------------------------------------------------------------
++
++    def _since(self):
++        return fields.Datetime.now() - timedelta(days=LOOKBACK_DAYS)
++
++    def _money(self, amount):
++        return format_amount(self.env, amount, self.env.company.currency_id)
++
++    def _outbound_payments(self):
++        return self.env["account.payment"].sudo().search([
++            ("payment_type", "=", "outbound"), ("state", "in", PAID_STATES),
++            ("date", ">=", self._since().date()), ("company_id", "in", self.env.companies.ids)])
++
++    def _effective_capabilities(self, user):
++        access = self.env["ir.model.access"].with_user(user)
++        caps = set()
++        if access.check("res.partner.bank", "write", raise_exception=False):
++            caps.add("bank_edit")
++        if user.has_group("account.group_validate_bank_account") or user.has_group("base.group_system"):
++            caps.add("bank_trust")
++        if access.check("account.move", "create", raise_exception=False):
++            caps.add("bill")
++        if access.check("account.payment", "create", raise_exception=False):
++            caps.add("pay")
++        if access.check("res.users", "create", raise_exception=False):
++            caps.add("user_admin")
++        return caps
++
++    def _restricted_capabilities(self, user, caps):
++        """{capability: rule names} for capabilities narrowed by group-specific record rules (K12).
++
++        Global rules (usually multi-company isolation) apply to everyone and are not a segregation control;
++        a rule attached to one of the user's groups is, e.g. "clerks may only pay from journal X".
++        """
++        out = {}
++        for cap in caps:
++            model, mode = CAPABILITY_ACCESS.get(cap, (None, None))
++            if not model:
++                continue
++            rules = self.env["ir.rule"].sudo().search([
++                ("model_id.model", "=", model), (f"perm_{mode}", "=", True), ("groups", "in", user.groups_id.ids)])
++            if rules:
++                out[cap] = rules.mapped("name")
++        return out
++
++    def _sod_conflicts(self):
++        """Every internal user holding a toxic combination, with the payments they actually made."""
++        users = self.env["res.users"].sudo().search([("share", "=", False), ("id", "!=", SUPERUSER_ID)])
++        payments = self._outbound_payments()
++        paid_by = defaultdict(lambda: [0, 0.0])
++        for pay in payments:
++            paid_by[pay.create_uid.id][0] += 1
++            paid_by[pay.create_uid.id][1] += abs(pay.amount_company_currency_signed)
++        conflicts = []
++        for user in users:
++            caps = self._effective_capabilities(user)
++            restricted = self._restricted_capabilities(user, caps)
++            for code, needed, severity, _why in TOXIC_COMBOS:
++                if set(needed) <= caps:
++                    count, amount = paid_by[user.id]
++                    limits = sorted({name for c in needed for name in restricted.get(c, [])})
++                    text = ", ".join(CAPABILITIES[c] for c in needed)
++                    if limits:
++                        # Record rules narrow the conflict to some records: still a gap, one level lower.
++                        severity = {"critical": "high", "high": "medium"}.get(severity, severity)
++                        text += _(" (limited by record rules: %s)", ", ".join(limits))
++                    conflicts.append({
++                        "user_id": user.id, "combo": code, "severity": severity,
++                        "severity_rank": SEVERITY_RANK[severity], "capabilities": text,
++                        "payment_count": count, "exposure": amount,
++                    })
++        return conflicts
++
++    def _sod_result(self, code):
++        combo = next(c for c in TOXIC_COMBOS if c[0] == code)
++        hits = [c for c in self._sod_conflicts() if c["combo"] == code]
++        if not hits:
++            return result("pass", _("No internal user holds this combination of rights."))
++        users = self.env["res.users"].browse([h["user_id"] for h in hits])
++        exercised = [h for h in hits if h["payment_count"]]
++        total = sum(h["exposure"] for h in hits)
++        who = listing(f"{u.login} ({self._money(h['exposure'])})" for u, h in zip(users, hits))
++        detail = _("%(n)s user(s) %(why)s: %(who)s.", n=len(hits), why=combo[3], who=who)
++        if exercised:
++            detail += " " + _("%(k)s of them created %(amt)s of payments in the last 12 months.",
++                              k=len(exercised), amt=self._money(total))
++            return result("fail", detail, severity=combo[2])
++        # Possible but never exercised: still a gap, one level lower.
++        lower = {"critical": "high", "high": "medium"}.get(combo[2], combo[2])
++        return result("fail", detail + " " + _("No payments made by them yet."), severity=lower)
++
++    def _check_sod_redirect_and_pay(self):
++        return self._sod_result("redirect_and_pay")
++
++    def _check_sod_escalate_and_pay(self):
++        return self._sod_result("escalate_and_pay")
++
++    def _check_sod_bill_and_pay(self):
++        return self._sod_result("bill_and_pay")
++
++    # -- transaction monitoring -------------------------------------------------------
++
++    def _bank_history(self, banks):
++        """{bank_id: [HistoryRow]} for account-number and trust changes.
++
++        Odoo records them twice: as tracking on the bank account itself, and as a "Bank Account #id updated"
++        message on the owner's chatter. API callers can suppress the first with ``tracking_disable``;
++        the second is written by res.partner.bank.write() regardless. Reading both, and noting which
++        source each row came from, catches the suppression.
++        """
++        banks = banks.sudo()
++        field_ids = {self.env["ir.model.fields"]._get("res.partner.bank", f).id: f
++                     for f in ("acc_number", "allow_out_payment")}
++        values = self.env["mail.tracking.value"].sudo().search([
++            ("field_id", "in", list(field_ids)), "|",
++            "&", ("mail_message_id.model", "=", "res.partner.bank"), ("mail_message_id.res_id", "in", banks.ids),
++            "&", ("mail_message_id.model", "=", "res.partner"), ("mail_message_id.res_id", "in", banks.partner_id.ids)])
++        by_partner = defaultdict(list)
++        for bank in banks:
++            by_partner[bank.partner_id.id].append(bank.id)
++        history = defaultdict(list)
++        for tv in values:
++            msg = tv.mail_message_id
++            if msg.model == "res.partner.bank":
++                bank_id, source = msg.res_id, "bank"
++            else:
++                ref = re.search(r"#(\d+)", html2plaintext(msg.body or ""))
++                candidates = by_partner[msg.res_id]
++                bank_id = int(ref.group(1)) if ref and int(ref.group(1)) in candidates else \
++                    (candidates[0] if len(candidates) == 1 else None)
++                source = "owner"
++            if bank_id:
++                history[bank_id].append(HistoryRow(msg.date, msg.create_uid, field_ids[tv.field_id.id],
++                                                   tv.old_value_char, tv.new_value_char, tv.new_value_integer, source))
++        return history
++
++    def _tracking(self, banks, field_name):
++        """{bank_id: [(date, user, new_value_integer)]} for one field, de-duplicated across both sources."""
++        out = defaultdict(list)
++        for bank_id, rows in self._bank_history(banks).items():
++            seen = set()
++            for row in sorted(rows, key=lambda r: r.date):
++                key = (row.date.replace(microsecond=0), row.new_char, row.new_int)
++                if row.field == field_name and key not in seen:
++                    seen.add(key)
++                    out[bank_id].append((row.date, row.user, row.new_int))
++        return out
++
++    def _account_changes(self, banks):
++        """{bank_id: [(date, user, kind)]} where kind is 'created' or 'changed'."""
++        changes = defaultdict(list)
++        for bank in banks:
++            changes[bank.id].append((bank.create_date, bank.create_uid, "created"))
++        for bank_id, rows in self._tracking(banks, "acc_number").items():
++            changes[bank_id] += [(date, user, "changed") for date, user, _v in rows]
++        return changes
++
++    def _events_result(self, events, label):
++        if not events:
++            return result("pass", _("No %s in the last 12 months.", label))
++        total = sum(events.mapped("amount"))
++        worst = min(events.mapped("severity"), key=lambda s: SEVERITY_RANK[s])
++        ranked = events.sorted(lambda e: (SEVERITY_RANK[e.severity], -e.amount))
++        return result("fail", _("%(n)s %(label)s to review, touching %(amt)s: %(items)s",
++                                n=len(events), label=label, amt=self._money(total),
++                                items=listing(ranked.mapped("detail"), limit=3)),
++                      "\n".join(f"[event {e.id}] {e.detail}" for e in ranked), severity=worst)
++
++    def _check_ccm_bank_change_payment(self):
++        payments = self._outbound_payments().filtered("partner_bank_id")
++        changes = self._account_changes(payments.partner_bank_id)
++        window = timedelta(days=BANK_CHANGE_WINDOW_DAYS)
++        found = []
++        for pay in payments:
++            # Chatter dates use the wall clock, record dates the transaction start: allow for the gap.
++            recent = [c for c in changes[pay.partner_bank_id.id]
++                      if c[0] <= pay.create_date + UNTRACKED_WRITE_TOLERANCE and pay.create_date - c[0] <= window]
++            if not recent:
++                continue
++            date, changer, kind = max(recent, key=lambda c: c[0])
++            same = changer == pay.create_uid
++            days = max((pay.create_date - date).days, 0)
++            severity = ("critical" if same else "high") if kind == "changed" else ("high" if same else "medium")
++            what = _("account number changed") if kind == "changed" else _("new bank account")
++            found.append({
++                "key": f"bank_change_payment:{pay.id}", "severity": severity,
++                "detail": _("%(pay)s to %(vendor)s: %(what)s by %(who)s %(d)s day(s) before payment by %(payer)s",
++                            pay=pay.name, vendor=pay.partner_id.display_name, what=what, who=changer.login,
++                            d=days, payer=pay.create_uid.login),
++                "event_date": pay.create_date, "actor_id": pay.create_uid.id, "partner_id": pay.partner_id.id,
++                "payment_id": pay.id, "payment_ids": [(6, 0, pay.ids)], "bank_id": pay.partner_bank_id.id,
++                "company_id": pay.company_id.id,
++                "amount": abs(pay.amount_company_currency_signed),
++            })
++        events = self.env["shield.risk.event"]._upsert("bank_change_payment", found)
++        return self._events_result(events, _("payment(s) to recently changed bank accounts"))
++
++    def _check_ccm_self_trusted_bank(self):
++        banks = self.env["res.partner.bank"].sudo().search([("allow_out_payment", "=", True)])
++        changes = self._account_changes(banks)
++        trusts = self._tracking(banks, "allow_out_payment")
++        payments = self._outbound_payments()
++        found = []
++        for bank in banks:
++            trust_rows = [(d, u) for d, u, v in trusts.get(bank.id, []) if v]
++            if not trust_rows:
++                # Trusted at creation: the creator trusted their own entry.
++                trust_rows = [(bank.create_date, bank.create_uid)]
++            trust_date, truster = max(trust_rows, key=lambda r: r[0])
++            prior = [c for c in changes[bank.id] if c[0] <= trust_date]
++            if truster.id == SUPERUSER_ID or not prior:
++                continue
++            _date, changer, kind = max(prior, key=lambda c: c[0])
++            if changer != truster:
++                continue
++            paid = payments.filtered(lambda p, b=bank, t=trust_date: p.partner_bank_id == b and p.create_date >= t)
++            amount = sum(abs(p.amount_company_currency_signed) for p in paid)
++            found.append({
++                "key": f"self_trusted_bank:{bank.id}:{fields.Datetime.to_string(trust_date)}",
++                "severity": "critical" if amount else "high",
++                "detail": _("%(acc)s of %(vendor)s %(kind)s and trusted by the same person (%(who)s); %(n)s payment(s) since",
++                            acc=bank.acc_number, vendor=bank.partner_id.display_name,
++                            kind=_("created") if kind == "created" else _("changed"), who=truster.login, n=len(paid)),
++                "event_date": trust_date, "actor_id": truster.id, "partner_id": bank.partner_id.id,
++                "bank_id": bank.id, "payment_ids": [(6, 0, paid.ids)], "amount": amount,
++            })
++        events = self.env["shield.risk.event"]._upsert("self_trusted_bank", found)
++        return self._events_result(events, _("self-verified bank account(s)"))
++
++    def _check_ccm_self_paid_bill(self):
++        found = []
++        for pay in self._outbound_payments():
++            bills = pay.reconciled_bill_ids.filtered(lambda b, p=pay: b.create_uid == p.create_uid)
++            if not bills:
++                continue
++            found.append({
++                "key": f"self_paid_bill:{pay.id}", "severity": "high",
++                "detail": _("%(user)s entered %(bills)s and paid it with %(pay)s",
++                            user=pay.create_uid.login, bills=", ".join(bills.mapped("name")), pay=pay.name),
++                "event_date": pay.create_date, "actor_id": pay.create_uid.id, "partner_id": pay.partner_id.id,
++                "payment_id": pay.id, "payment_ids": [(6, 0, pay.ids)], "move_id": bills[:1].id,
++                "company_id": pay.company_id.id,
++                "amount": abs(pay.amount_company_currency_signed),
++            })
++        events = self.env["shield.risk.event"]._upsert("self_paid_bill", found)
++        return self._events_result(events, _("bill(s) paid by the person who entered them"))
++
++    def _check_ccm_duplicate_bill(self):
++        bills = self.env["account.move"].sudo().search([
++            ("move_type", "=", "in_invoice"), ("state", "=", "posted"),
++            ("payment_state", "!=", "reversed"), ("invoice_date", ">=", self._since().date()),
++            ("company_id", "in", self.env.companies.ids)], order="id")
++        buckets = defaultdict(list)
++        for bill in bills:
++            # "NW-2291", "nw 2291" and "NW/2291" are the same reference typed differently.
++            ref = re.sub(r"[^0-9a-z]", "", (bill.ref or "").lower())
++            buckets[(bill.partner_id.commercial_partner_id.id, bill.currency_id.id,
++                     round(bill.amount_total, 2), ref or str(bill.invoice_date))].append(bill)
++        found = []
++        for group in buckets.values():
++            original = group[0]
++            for dup in group[1:]:
++                found.append({
++                    "key": f"duplicate_bill:{dup.id}", "severity": "medium",
++                    "detail": _("%(dup)s duplicates %(orig)s (%(vendor)s, %(amt)s)", dup=dup.name, orig=original.name,
++                                vendor=dup.partner_id.display_name, amt=self._money(abs(dup.amount_total_signed))),
++                    "event_date": dup.create_date, "actor_id": dup.create_uid.id, "partner_id": dup.partner_id.id,
++                    "move_id": dup.id, "company_id": dup.company_id.id, "amount": abs(dup.amount_total_signed),
++                })
++        events = self.env["shield.risk.event"]._upsert("duplicate_bill", found)
++        return self._events_result(events, _("possible duplicate bill(s)"))
++
++    # -- anti-forensics and ghost beneficiaries (added after the attack lab) --------------------
++
++    def _acc_digest(self, bank):
++        return hashlib.sha256((bank.sanitized_acc_number or bank.acc_number or "").encode()).hexdigest()
++
++    def _check_ccm_untracked_bank_change(self):
++        """Bank details changed while hiding it: suppressed tracking, no trace at all, or a silent rewrite."""
++        banks = self.env["res.partner.bank"].sudo().with_context(active_test=False).search([])
++        history = self._bank_history(banks)
++        Fingerprint = self.env["shield.bank.fingerprint"].sudo()
++        prints = {fp.bank_id.id: fp for fp in Fingerprint.search([("bank_id", "in", banks.ids)])}
++        payments = self._outbound_payments()
++        now = fields.Datetime.now()
++        found = []
++        for bank in banks:
++            rows = history.get(bank.id, [])
++            acc_rows = [r for r in rows if r.field == "acc_number"]
++            logged_on_bank = {r.new_char or "" for r in acc_rows if r.source == "bank"}
++            suppressed = [r for r in acc_rows if r.source == "owner" and (r.new_char or "") not in logged_on_bank]
++            last_trace = max([bank.create_date] + [r.date for r in rows])
++            digest = self._acc_digest(bank)
++            fp = prints.get(bank.id)
++            reasons, actor, since = [], bank.write_uid, bank.write_date
++            if suppressed:
++                row = max(suppressed, key=lambda r: r.date)
++                actor, since = row.user, row.date
++                reasons.append(_("account number changed to %(new)s by %(who)s on %(date)s with the bank account's "
++                                 "own audit trail switched off (tracking_disable)",
++                                 new=row.new_char, who=row.user.login, date=fields.Datetime.to_string(row.date)))
++            elif bank.write_date and bank.write_date - last_trace > UNTRACKED_WRITE_TOLERANCE:
++                reasons.append(_("modified by %(who)s on %(date)s without any audit-trail entry",
++                                 who=bank.write_uid.login, date=fields.Datetime.to_string(bank.write_date)))
++            if fp and fp.acc_hash != digest and not any((r.new_char or "") == bank.acc_number for r in acc_rows):
++                reasons.append(_("its number no longer matches the one Shield fingerprinted on %s, and no change "
++                                 "was logged anywhere", fields.Datetime.to_string(fp.last_seen)))
++            if fp:
++                fp.write({"acc_hash": digest, "last_seen": now})
++            else:
++                Fingerprint.create({"bank_id": bank.id, "acc_hash": digest, "last_seen": now})
++            if not reasons:
++                continue
++            # Record timestamps use the transaction start, chatter uses the wall clock: allow for the gap.
++            paid = payments.filtered(lambda p, b=bank, s=since: p.partner_bank_id == b
++                                     and p.create_date >= s - UNTRACKED_WRITE_TOLERANCE)
++            found.append({
++                "key": f"untracked_bank_change:{bank.id}:{digest[:16]}", "severity": "critical",
++                "detail": _("%(acc)s of %(owner)s: %(why)s; %(n)s payment(s) since",
++                            acc=bank.acc_number, owner=bank.partner_id.display_name, why="; ".join(reasons),
++                            n=len(paid)),
++                "event_date": since, "actor_id": actor.id, "partner_id": bank.partner_id.id, "bank_id": bank.id,
++                "payment_ids": [(6, 0, paid.ids)], "amount": sum(abs(p.amount_company_currency_signed) for p in paid),
++            })
++        events = self.env["shield.risk.event"]._upsert("untracked_bank_change", found)
++        return self._events_result(events, _("bank account change(s) hidden from the audit trail"))
++
++    @staticmethod
++    def _norm_acc(number):
++        return re.sub(r"[^0-9A-Za-z]", "", number or "").upper()
++
++    def _number_timeline(self, banks):
++        """{bank_id: [(from_date, normalized number, as typed)]}: every number each bank record has held.
++
++        Payments point at the bank *record*, whose number can change later. Judging a payment by the
++        number the record held when it was paid stops a fraudster from erasing the trail by changing
++        the number again.
++        """
++        history = self._bank_history(banks)
++        timeline = {}
++        for bank in banks:
++            rows, seen = [], set()
++            for row in sorted((r for r in history.get(bank.id, []) if r.field == "acc_number"), key=lambda r: r.date):
++                key = (row.date.replace(microsecond=0), row.new_char)
++                if key not in seen:
++                    seen.add(key)
++                    rows.append(row)
++            steps = []
++            if rows and rows[0].old_char:
++                steps.append((bank.create_date, self._norm_acc(rows[0].old_char), rows[0].old_char))
++            steps += [(r.date, self._norm_acc(r.new_char), r.new_char) for r in rows]
++            if not steps:
++                steps = [(bank.create_date, self._norm_acc(bank.acc_number), bank.acc_number)]
++            if steps[-1][1] != self._norm_acc(bank.acc_number):  # changed without any trace
++                steps.append((bank.write_date, self._norm_acc(bank.acc_number), bank.acc_number))
++            timeline[bank.id] = steps
++        return timeline
++
++    def _number_at(self, steps, when):
++        # Small tolerance: record time is the transaction start, chatter time the wall clock.
++        held = [s for s in steps if s[0] <= when + NUMBER_ATTRIBUTION_TOLERANCE]
++        return (held[-1] if held else steps[0])[1]
++
++    def _check_ccm_shared_bank_account(self):
++        """One IBAN on several unrelated contacts, now or in the past: ghost vendors and payroll diversion."""
++        banks = self.env["res.partner.bank"].sudo().with_context(active_test=False).search([])
++        timeline = self._number_timeline(banks)
++        holders, typed, banks_by_number = defaultdict(set), {}, defaultdict(set)
++        for bank in banks:
++            for _date, number, as_typed in timeline[bank.id]:
++                if number:
++                    holders[number].add(bank.partner_id.commercial_partner_id.id)
++                    banks_by_number[number].add(bank.id)
++                    typed.setdefault(number, as_typed)
++        staff = self.env["res.users"].sudo().search([("share", "=", False)])
++        paid_by_number = defaultdict(lambda: self.env["account.payment"].sudo())
++        for pay in self._outbound_payments().filtered("partner_bank_id"):
++            steps = timeline.get(pay.partner_bank_id.id)
++            if steps:
++                paid_by_number[self._number_at(steps, pay.create_date)] |= pay
++        found = []
++        for number, partner_ids in holders.items():
++            if len(partner_ids) < 2:
++                continue
++            partners = self.env["res.partner"].sudo().browse(sorted(partner_ids))
++            personal = partners.filtered(lambda p: p in staff.partner_id or (
++                not p.is_company and p.create_uid in staff and p.create_uid.id != SUPERUSER_ID))
++            current = banks.filtered(lambda b, n=number: self._norm_acc(b.acc_number) == n)
++            paid = paid_by_number[number]
++            names = ", ".join(p.display_name + (_(" (created by %s)", p.create_uid.login) if p in personal else "")
++                              for p in partners)
++            history_note = "" if len(current.partner_id.commercial_partner_id) == len(partners) else                 _(" (some no longer hold it: the number was changed afterwards)")
++            holder_banks = self.env["res.partner.bank"].sudo().browse(sorted(banks_by_number[number]))
++            found.append({
++                "key": f"shared_bank_account:{number}", "severity": "critical" if personal else "high",
++                "detail": _("%(acc)s is or was registered on %(n)s different contacts: %(who)s%(note)s; "
++                            "%(p)s payment(s) made to it", acc=typed[number], n=len(partners), who=names,
++                            note=history_note, p=len(paid)),
++                "event_date": max(holder_banks.mapped("create_date")),
++                "actor_id": holder_banks.sorted("create_date")[-1].create_uid.id,
++                "partner_id": partners[0].id, "bank_id": (current or holder_banks)[:1].id,
++                "payment_ids": [(6, 0, paid.ids)], "amount": sum(abs(p.amount_company_currency_signed) for p in paid),
++            })
++        events = self.env["shield.risk.event"]._upsert("shared_bank_account", found)
++        return self._events_result(events, _("bank account(s) shared between unrelated contacts"))
++
++    # -- cycle 3: prevention and vendor-master fraud ----------------------------------------------
++
++    def _check_payment_hold(self):
++        mode = self._param("shield.payment_hold", "off")
++        days = int(self._param("shield.payment_hold_days", 30) or 30)
++        if mode != "enforce":
++            return result("fail", _("Payments to freshly changed bank accounts are only detected, not stopped. "
++                                    "Turn on Shield's payment hold (one-click fix) to require a second person to "
++                                    "verify any account number set in the last %s days before money leaves.", days))
++        held = self.env["res.partner.bank"].sudo().search([]).filtered(lambda b: b._shield_hold_reason())
++        return result("pass", _("Payment hold enforced (%(d)s days); %(n)s bank account(s) currently held for "
++                                "verification.", d=days, n=len(held)),
++                      listing(f"{b.acc_number} ({b.partner_id.display_name})" for b in held))
++
++    def _fix_payment_hold(self):
++        self._set_param("shield.payment_hold", "enforce", False)
++        days = self._param("shield.payment_hold_days", 30)
++        return _("Payment hold enforced: payments to bank accounts set or changed in the last %s days now need "
++                 "second-person verification ('Verify with Shield' on the bank account).", days), False
++
++    @staticmethod
++    def _vendor_key(name):
++        """Normalize a vendor name so 'N0rthwind Logistics Ltd.' and 'Northwind Logistics' compare equal."""
++        text = (name or "").lower().translate(str.maketrans("0134578@$", "oleastbas"))
++        text = re.sub(r"\b(ltd|llc|inc|gmbh|sarl|srl|sas|sa|bv|nv|co|corp|company|limited|plc|ag|spa)\b", " ", text)
++        return re.sub(r"[^a-z]", "", text)
++
++    def _vendors(self):
++        return self.env["res.partner"].sudo().search([("supplier_rank", ">", 0), ("parent_id", "=", False)])
++
++    def _check_ccm_lookalike_vendor(self):
++        vendors = self._vendors()
++        recent = vendors.filtered(lambda v: v.create_date >= self._since())
++        payments = self._outbound_payments()
++        found = []
++        for new in recent:
++            key = self._vendor_key(new.name)
++            if len(key) < 5:
++                continue
++            for old in vendors:
++                if old == new or old.create_date > new.create_date:
++                    continue
++                other = self._vendor_key(old.name)
++                matcher = SequenceMatcher(None, key, other)
++                if matcher.real_quick_ratio() < 0.88 or matcher.ratio() < 0.88:
++                    continue
++                paid = payments.filtered(lambda p, n=new: p.partner_id.commercial_partner_id == n)
++                found.append({
++                    "key": f"lookalike_vendor:{new.id}:{old.id}",
++                    "severity": "critical" if paid else "high",
++                    "detail": _("'%(new)s' (created by %(who)s on %(date)s) imitates existing vendor '%(old)s'; "
++                                "%(n)s payment(s) to it", new=new.name, who=new.create_uid.login,
++                                date=fields.Date.to_string(new.create_date.date()), old=old.name, n=len(paid)),
++                    "event_date": new.create_date, "actor_id": new.create_uid.id, "partner_id": new.id,
++                    "bank_id": new.bank_ids[:1].id, "payment_ids": [(6, 0, paid.ids)],
++                    "amount": sum(abs(p.amount_company_currency_signed) for p in paid),
++                })
++                break
++        events = self.env["shield.risk.event"]._upsert("lookalike_vendor", found)
++        return self._events_result(events, _("lookalike vendor(s)"))
++
++    def _check_ccm_new_vendor_fast_payment(self):
++        window = timedelta(days=7)
++        found = []
++        for pay in self._outbound_payments():
++            vendor = pay.partner_id.commercial_partner_id
++            if not vendor.create_date or not (timedelta(0) <= pay.create_date - vendor.create_date
++                                              + UNTRACKED_WRITE_TOLERANCE <= window):
++                continue
++            creators = vendor.create_uid | pay.partner_bank_id.create_uid
++            if pay.create_uid not in creators or pay.create_uid.id == SUPERUSER_ID:
++                continue
++            same_bank = pay.partner_bank_id.create_uid == pay.create_uid
++            found.append({
++                "key": f"new_vendor_fast_payment:{pay.id}", "severity": "critical" if same_bank else "high",
++                "detail": _("%(who)s created %(vendor)s%(bank)s and paid it %(d)s day(s) later (%(pay)s)",
++                            who=pay.create_uid.login, vendor=vendor.display_name,
++                            bank=_(" and its bank account") if same_bank else "",
++                            d=max((pay.create_date - vendor.create_date).days, 0), pay=pay.name),
++                "event_date": pay.create_date, "actor_id": pay.create_uid.id, "partner_id": vendor.id,
++                "payment_id": pay.id, "payment_ids": [(6, 0, pay.ids)], "company_id": pay.company_id.id,
++                "amount": abs(pay.amount_company_currency_signed),
++            })
++        events = self.env["shield.risk.event"]._upsert("new_vendor_fast_payment", found)
++        return self._events_result(events, _("new vendor(s) paid within a week by their creator"))
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden_finance/views/shield_case_views.xml odoo-shield-warden-port/v17/addons/odoo_shield_warden_finance/views/shield_case_views.xml
+--- odoo-shield-warden/addons/odoo_shield_warden_finance/views/shield_case_views.xml	2026-10-30 16:22:39.281983300 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden_finance/views/shield_case_views.xml	2026-11-05 18:19:30.639206100 -0300
+@@ -1,153 +1,153 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<odoo>
+-    <record id="view_shield_risk_case_kanban" model="ir.ui.view">
+-        <field name="name">shield.risk.case.kanban</field>
+-        <field name="model">shield.risk.case</field>
+-        <field name="arch" type="xml">
+-            <kanban default_group_by="state" create="false" group_create="false" records_draggable="false">
+-                <field name="currency_id"/>
+-                <templates>
+-                    <t t-name="card">
+-                        <div class="d-flex justify-content-between">
+-                            <field name="name" class="fw-bold"/>
+-                            <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"
+-                                   decoration-warning="severity == 'medium'"/>
+-                        </div>
+-                        <field name="amount" widget="monetary" class="fs-4 fw-bold text-danger"/>
+-                        <div class="small text-muted"><field name="alert_count"/> alert(s)</div>
+-                        <field name="actor_ids" widget="many2many_avatar_user"/>
+-                    </t>
+-                </templates>
+-            </kanban>
+-        </field>
+-    </record>
+-
+-    <record id="view_shield_risk_case_list" model="ir.ui.view">
+-        <field name="name">shield.risk.case.list</field>
+-        <field name="model">shield.risk.case</field>
+-        <field name="arch" type="xml">
+-            <list create="false" decoration-muted="state in ('legitimate', 'closed')" decoration-danger="state == 'escalated'">
+-                <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"
+-                       decoration-warning="severity == 'medium'"/>
+-                <field name="name"/>
+-                <field name="alert_count"/>
+-                <field name="actor_ids" widget="many2many_avatar_user"/>
+-                <field name="currency_id" column_invisible="True"/>
+-                <field name="amount" sum="Total at risk"/>
+-                <field name="state" widget="badge" decoration-danger="state == 'escalated'"
+-                       decoration-warning="state == 'open'" decoration-success="state == 'legitimate'"/>
+-            </list>
+-        </field>
+-    </record>
+-
+-    <record id="view_shield_risk_case_form" model="ir.ui.view">
+-        <field name="name">shield.risk.case.form</field>
+-        <field name="model">shield.risk.case</field>
+-        <field name="arch" type="xml">
+-            <form create="false">
+-                <header>
+-                    <button name="action_mark_legitimate" type="object" string="Verified legitimate" class="btn-primary"
+-                            invisible="state not in ('open', 'escalated')" groups="odoo_shield_warden.group_shield_manager"/>
+-                    <button name="action_escalate" type="object" string="Escalate"
+-                            invisible="state != 'open'" groups="odoo_shield_warden.group_shield_manager"/>
+-                    <button name="action_reopen" type="object" string="Reopen"
+-                            invisible="state == 'open'" groups="odoo_shield_warden.group_shield_manager"/>
+-                    <field name="state" widget="statusbar" statusbar_visible="open,escalated,legitimate"/>
+-                </header>
+-                <sheet>
+-                    <div class="oe_title">
+-                        <h2><field name="name"/></h2>
+-                        <h1 class="text-danger"><field name="amount"/></h1>
+-                    </div>
+-                    <group>
+-                        <group>
+-                            <field name="severity"/>
+-                            <field name="partner_id"/>
+-                            <field name="bank_id" invisible="not bank_id"/>
+-                        </group>
+-                        <group>
+-                            <field name="actor_ids" widget="many2many_avatar_user"/>
+-                            <field name="reviewer_id" invisible="not reviewer_id"/>
+-                            <field name="currency_id" invisible="1"/>
+-                        </group>
+-                    </group>
+-                    <label for="reasons" string="Why Shield opened this case"/>
+-                    <field name="reasons"/>
+-                    <label for="review_note"/>
+-                    <field name="review_note" placeholder="How was it verified? e.g. 'Called vendor CFO on the number in our 2024 contract; change confirmed.'"/>
+-                    <notebook>
+-                        <page string="Alerts">
+-                            <field name="event_ids">
+-                                <list>
+-                                    <field name="severity"/>
+-                                    <field name="rule"/>
+-                                    <field name="detail"/>
+-                                    <field name="actor_id" widget="many2one_avatar_user"/>
+-                                    <field name="currency_id" column_invisible="True"/>
+-                                    <field name="amount"/>
+-                                    <field name="state"/>
+-                                </list>
+-                            </field>
+-                        </page>
+-                    </notebook>
+-                </sheet>
+-                <chatter/>
+-            </form>
+-        </field>
+-    </record>
+-
+-    <record id="view_shield_risk_case_search" model="ir.ui.view">
+-        <field name="name">shield.risk.case.search</field>
+-        <field name="model">shield.risk.case</field>
+-        <field name="arch" type="xml">
+-            <search>
+-                <field name="name"/>
+-                <field name="partner_id"/>
+-                <field name="actor_ids"/>
+-                <filter name="to_review" string="To review" domain="[('state', 'in', ('open', 'escalated'))]"/>
+-                <filter name="critical_high" string="Critical &amp; high" domain="[('severity', 'in', ('critical', 'high'))]"/>
+-            </search>
+-        </field>
+-    </record>
+-
+-    <record id="action_shield_risk_cases" model="ir.actions.act_window">
+-        <field name="name">Money at Risk</field>
+-        <field name="res_model">shield.risk.case</field>
+-        <field name="view_mode">kanban,list,form</field>
+-        <field name="context">{'search_default_to_review': 1}</field>
+-        <field name="help" type="html">
+-            <p class="o_view_nocontent_smiling_face">No money at risk</p>
+-            <p>Each case groups every alert about one bank account, payment or bill, with the money counted once.</p>
+-        </field>
+-    </record>
+-
+-    <!-- Payment hold on the bank account form -->
+-    <record id="view_partner_bank_form_shield" model="ir.ui.view">
+-        <field name="name">res.partner.bank.form.shield</field>
+-        <field name="model">res.partner.bank</field>
+-        <field name="inherit_id" ref="base.view_partner_bank_form"/>
+-        <field name="arch" type="xml">
+-            <xpath expr="//sheet" position="before">
+-                <header>
+-                    <button name="action_shield_verify" type="object" string="Verify with Shield" class="btn-primary"
+-                            invisible="not shield_hold_reason"
+-                            confirm="Confirm you verified this account number with the vendor through a channel you already trusted (e.g. a phone number from an existing contract)."/>
+-                </header>
+-            </xpath>
+-            <xpath expr="//sheet/group" position="before">
+-                <div class="alert alert-warning" role="alert" invisible="not shield_hold_reason">
+-                    <strong>Payments held by Shield:</strong> <field name="shield_hold_reason" class="oe_inline"/>
+-                </div>
+-            </xpath>
+-            <xpath expr="//field[@name='allow_out_payment']" position="after">
+-                <field name="shield_verified_by" invisible="not shield_verified_by"/>
+-                <field name="shield_verified_on" invisible="not shield_verified_on"/>
+-            </xpath>
+-        </field>
+-    </record>
+-
+-    <menuitem id="menu_shield_money_at_risk" name="Money at Risk" parent="odoo_shield_warden.menu_shield_root"
+-              action="action_shield_risk_cases" sequence="5"/>
+-    <menuitem id="menu_shield_alerts" name="Alerts" parent="odoo_shield_warden.menu_shield_grc"
+-              action="action_shield_risk_events" sequence="0"/>
+-</odoo>
++<?xml version="1.0" encoding="utf-8"?>
++<odoo>
++    <record id="view_shield_risk_case_kanban" model="ir.ui.view">
++        <field name="name">shield.risk.case.kanban</field>
++        <field name="model">shield.risk.case</field>
++        <field name="arch" type="xml">
++            <kanban default_group_by="state" create="false" group_create="false" records_draggable="false">
++                <field name="currency_id"/>
++                <templates>
++                    <t t-name="card">
++                        <div class="d-flex justify-content-between">
++                            <field name="name" class="fw-bold"/>
++                            <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"
++                                   decoration-warning="severity == 'medium'"/>
++                        </div>
++                        <field name="amount" widget="monetary" class="fs-4 fw-bold text-danger"/>
++                        <div class="small text-muted"><field name="alert_count"/> alert(s)</div>
++                        <field name="actor_ids" widget="many2many_avatar_user"/>
++                    </t>
++                </templates>
++            </kanban>
++        </field>
++    </record>
++
++    <record id="view_shield_risk_case_list" model="ir.ui.view">
++        <field name="name">shield.risk.case.list</field>
++        <field name="model">shield.risk.case</field>
++        <field name="arch" type="xml">
++            <tree create="false" decoration-muted="state in ('legitimate', 'closed')" decoration-danger="state == 'escalated'">
++                <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"
++                       decoration-warning="severity == 'medium'"/>
++                <field name="name"/>
++                <field name="alert_count"/>
++                <field name="actor_ids" widget="many2many_avatar_user"/>
++                <field name="currency_id" column_invisible="True"/>
++                <field name="amount" sum="Total at risk"/>
++                <field name="state" widget="badge" decoration-danger="state == 'escalated'"
++                       decoration-warning="state == 'open'" decoration-success="state == 'legitimate'"/>
++            </tree>
++        </field>
++    </record>
++
++    <record id="view_shield_risk_case_form" model="ir.ui.view">
++        <field name="name">shield.risk.case.form</field>
++        <field name="model">shield.risk.case</field>
++        <field name="arch" type="xml">
++            <form create="false">
++                <header>
++                    <button name="action_mark_legitimate" type="object" string="Verified legitimate" class="btn-primary"
++                            invisible="state not in ('open', 'escalated')" groups="odoo_shield_warden.group_shield_manager"/>
++                    <button name="action_escalate" type="object" string="Escalate"
++                            invisible="state != 'open'" groups="odoo_shield_warden.group_shield_manager"/>
++                    <button name="action_reopen" type="object" string="Reopen"
++                            invisible="state == 'open'" groups="odoo_shield_warden.group_shield_manager"/>
++                    <field name="state" widget="statusbar" statusbar_visible="open,escalated,legitimate"/>
++                </header>
++                <sheet>
++                    <div class="oe_title">
++                        <h2><field name="name"/></h2>
++                        <h1 class="text-danger"><field name="amount"/></h1>
++                    </div>
++                    <group>
++                        <group>
++                            <field name="severity"/>
++                            <field name="partner_id"/>
++                            <field name="bank_id" invisible="not bank_id"/>
++                        </group>
++                        <group>
++                            <field name="actor_ids" widget="many2many_avatar_user"/>
++                            <field name="reviewer_id" invisible="not reviewer_id"/>
++                            <field name="currency_id" invisible="1"/>
++                        </group>
++                    </group>
++                    <label for="reasons" string="Why Shield opened this case"/>
++                    <field name="reasons"/>
++                    <label for="review_note"/>
++                    <field name="review_note" placeholder="How was it verified? e.g. 'Called vendor CFO on the number in our 2024 contract; change confirmed.'"/>
++                    <notebook>
++                        <page string="Alerts">
++                            <field name="event_ids">
++                                <tree>
++                                    <field name="severity"/>
++                                    <field name="rule"/>
++                                    <field name="detail"/>
++                                    <field name="actor_id" widget="many2one_avatar_user"/>
++                                    <field name="currency_id" column_invisible="True"/>
++                                    <field name="amount"/>
++                                    <field name="state"/>
++                                </tree>
++                            </field>
++                        </page>
++                    </notebook>
++                </sheet>
++                <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
++            </form>
++        </field>
++    </record>
++
++    <record id="view_shield_risk_case_search" model="ir.ui.view">
++        <field name="name">shield.risk.case.search</field>
++        <field name="model">shield.risk.case</field>
++        <field name="arch" type="xml">
++            <search>
++                <field name="name"/>
++                <field name="partner_id"/>
++                <field name="actor_ids"/>
++                <filter name="to_review" string="To review" domain="[('state', 'in', ('open', 'escalated'))]"/>
++                <filter name="critical_high" string="Critical &amp; high" domain="[('severity', 'in', ('critical', 'high'))]"/>
++            </search>
++        </field>
++    </record>
++
++    <record id="action_shield_risk_cases" model="ir.actions.act_window">
++        <field name="name">Money at Risk</field>
++        <field name="res_model">shield.risk.case</field>
++        <field name="view_mode">kanban,tree,form</field>
++        <field name="context">{'search_default_to_review': 1}</field>
++        <field name="help" type="html">
++            <p class="o_view_nocontent_smiling_face">No money at risk</p>
++            <p>Each case groups every alert about one bank account, payment or bill, with the money counted once.</p>
++        </field>
++    </record>
++
++    <!-- Payment hold on the bank account form -->
++    <record id="view_partner_bank_form_shield" model="ir.ui.view">
++        <field name="name">res.partner.bank.form.shield</field>
++        <field name="model">res.partner.bank</field>
++        <field name="inherit_id" ref="base.view_partner_bank_form"/>
++        <field name="arch" type="xml">
++            <xpath expr="//sheet" position="before">
++                <header>
++                    <button name="action_shield_verify" type="object" string="Verify with Shield" class="btn-primary"
++                            invisible="not shield_hold_reason"
++                            confirm="Confirm you verified this account number with the vendor through a channel you already trusted (e.g. a phone number from an existing contract)."/>
++                </header>
++            </xpath>
++            <xpath expr="//sheet/group" position="before">
++                <div class="alert alert-warning" role="alert" invisible="not shield_hold_reason">
++                    <strong>Payments held by Shield:</strong> <field name="shield_hold_reason" class="oe_inline"/>
++                </div>
++            </xpath>
++            <xpath expr="//field[@name='allow_out_payment']" position="after">
++                <field name="shield_verified_by" invisible="not shield_verified_by"/>
++                <field name="shield_verified_on" invisible="not shield_verified_on"/>
++            </xpath>
++        </field>
++    </record>
++
++    <menuitem id="menu_shield_money_at_risk" name="Money at Risk" parent="odoo_shield_warden.menu_shield_root"
++              action="action_shield_risk_cases" sequence="5"/>
++    <menuitem id="menu_shield_alerts" name="Alerts" parent="odoo_shield_warden.menu_shield_grc"
++              action="action_shield_risk_events" sequence="0"/>
++</odoo>
+diff -ruN '--exclude=__pycache__' odoo-shield-warden/addons/odoo_shield_warden_finance/views/shield_finance_views.xml odoo-shield-warden-port/v17/addons/odoo_shield_warden_finance/views/shield_finance_views.xml
+--- odoo-shield-warden/addons/odoo_shield_warden_finance/views/shield_finance_views.xml	2026-10-31 23:13:02.622751600 -0300
++++ odoo-shield-warden-port/v17/addons/odoo_shield_warden_finance/views/shield_finance_views.xml	2026-11-05 18:19:30.647659900 -0300
+@@ -5,7 +5,7 @@
+         <field name="name">shield.risk.event.list</field>
+         <field name="model">shield.risk.event</field>
+         <field name="arch" type="xml">
+-            <list create="false" decoration-muted="state in ('legitimate', 'closed')" decoration-danger="state == 'escalated'">
++            <tree create="false" decoration-muted="state in ('legitimate', 'closed')" decoration-danger="state == 'escalated'">
+                 <field name="event_date"/>
+                 <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"
+                        decoration-warning="severity == 'medium'"/>
+@@ -17,7 +17,7 @@
+                 <field name="amount" sum="Total at risk"/>
+                 <field name="state" widget="badge" decoration-danger="state == 'escalated'"
+                        decoration-warning="state == 'open'" decoration-success="state == 'legitimate'"/>
+-            </list>
++            </tree>
+         </field>
+     </record>
+ 
+@@ -60,7 +60,7 @@
+                     <label for="review_note"/>
+                     <field name="review_note" placeholder="How was it verified? e.g. 'Called vendor CFO on number from 2024 contract, account change confirmed.'"/>
+                 </sheet>
+-                <chatter/>
++                <div class="oe_chatter"><field name="message_follower_ids"/><field name="message_ids"/></div>
+             </form>
+         </field>
+     </record>
+@@ -99,7 +99,7 @@
+     <record id="action_shield_risk_events" model="ir.actions.act_window">
+         <field name="name">Money at Risk</field>
+         <field name="res_model">shield.risk.event</field>
+-        <field name="view_mode">list,pivot,form</field>
++        <field name="view_mode">tree,pivot,form</field>
+         <field name="context">{'search_default_to_review': 1}</field>
+         <field name="help" type="html">
+             <p class="o_view_nocontent_smiling_face">No risky payments detected</p>
+@@ -113,7 +113,7 @@
+         <field name="name">shield.access.conflict.list</field>
+         <field name="model">shield.access.conflict</field>
+         <field name="arch" type="xml">
+-            <list create="false" edit="false">
++            <tree create="false" edit="false">
+                 <field name="user_id" widget="many2one_avatar_user"/>
+                 <field name="combo"/>
+                 <field name="severity" widget="badge" decoration-danger="severity in ('critical', 'high')"/>
+@@ -122,7 +122,7 @@
+                 <field name="currency_id" column_invisible="True"/>
+                 <field name="exposure"/>
+                 <field name="assessment_id" optional="hide"/>
+-            </list>
++            </tree>
+         </field>
+     </record>
+ 
+@@ -149,7 +149,7 @@
+ latest = env['shield.assessment'].search([], limit=1)
+ action = {
+     'type': 'ir.actions.act_window', 'name': 'Access Conflicts (latest assessment)',
+-    'res_model': 'shield.access.conflict', 'view_mode': 'list',
++    'res_model': 'shield.access.conflict', 'view_mode': 'tree',
+     'domain': [('assessment_id', '=', latest.id)],
+ }
+         </field>
+@@ -183,7 +183,7 @@
+             <xpath expr="//notebook/page[1]" position="after">
+                 <page string="Access conflicts" invisible="not conflict_ids">
+                     <field name="conflict_ids">
+-                        <list>
++                        <tree>
+                             <field name="user_id" widget="many2one_avatar_user"/>
+                             <field name="combo"/>
+                             <field name="severity"/>
+@@ -191,7 +191,7 @@
+                             <field name="payment_count"/>
+                             <field name="currency_id" column_invisible="True"/>
+                             <field name="exposure"/>
+-                        </list>
++                        </tree>
+                     </field>
+                 </page>
+             </xpath>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_scorecard" model="ir.actions.report">
+        <field name="name">Security Scorecard</field>
+        <field name="model">shield.assessment</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">odoo_shield_warden.report_scorecard</field>
+        <field name="report_file">odoo_shield_warden.report_scorecard</field>
+        <field name="print_report_name">'Security Scorecard - %s' % object.name</field>
+        <field name="binding_model_id" ref="model_shield_assessment"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_scorecard">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Security &amp; GRC Scorecard</h2>
+                        <p class="text-muted">
+                            <span t-field="o.name"/> · <span t-field="o.date"/> ·
+                            Odoo <span t-field="o.odoo_version"/> <span t-field="o.edition"/>
+                        </p>
+
+                        <table class="table table-sm table-borderless mt-3">
+                            <tr>
+                                <td class="text-center" style="width: 33%">
+                                    <div style="font-size: 42px; font-weight: bold;" t-field="o.grade"/>
+                                    <div>Grade</div>
+                                </td>
+                                <td class="text-center" style="width: 33%">
+                                    <div style="font-size: 32px; font-weight: bold;"><t t-esc="'%.0f' % o.security_score"/>/100</div>
+                                    <div>Security score</div>
+                                </td>
+                                <td class="text-center" style="width: 33%">
+                                    <div style="font-size: 32px; font-weight: bold;"><t t-esc="'%.0f' % o.grc_score"/>%</div>
+                                    <div>GRC compliance</div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <h4>Top 3 fixes</h4>
+                        <ol>
+                            <li t-foreach="o.top_fixes()" t-as="r" class="mb-2">
+                                <strong t-field="r.control_id.name"/>
+                                (<span t-field="r.severity"/>):
+                                <span t-field="r.detail"/><br/>
+                                <span class="text-muted" t-field="r.control_id.remediation"/>
+                            </li>
+                        </ol>
+
+                        <h4>Framework compliance</h4>
+                        <table class="table table-sm">
+                            <thead><tr><th>Framework</th><th class="text-end">Satisfied</th><th class="text-end">Applicable</th><th class="text-end">Compliance</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.framework_score_ids" t-as="f">
+                                    <td><span t-field="f.framework_id.name"/></td>
+                                    <td class="text-end"><span t-field="f.satisfied"/></td>
+                                    <td class="text-end"><span t-field="f.applicable"/></td>
+                                    <td class="text-end"><t t-esc="'%.0f' % f.percent"/>%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>All controls</h4>
+                        <table class="table table-sm" style="font-size: 11px;">
+                            <thead><tr><th>Status</th><th>Severity</th><th>Control</th><th>Detail</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.result_ids" t-as="r">
+                                    <td><strong t-attf-style="color: #{'#b3261e' if r.status == 'fail' else '#b26a00' if r.status == 'warn' else '#1e7d32' if r.status == 'pass' else '#6b7280'};" t-field="r.status"/></td>
+                                    <td><span t-field="r.severity"/></td>
+                                    <td><span t-field="r.control_id.name"/></td>
+                                    <td><span t-field="r.detail"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p class="text-muted small">Framework mappings support evidence collection and are not a certification.
+                            Scores reflect controls measured at the time of the assessment.</p>
+                        <p class="text-muted small" t-if="o.content_hash">Evidence seal (SHA-256, chained to the previous
+                            assessment): <code t-field="o.content_hash"/></p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

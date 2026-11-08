@@ -1,0 +1,28 @@
+name: Security Review
+
+# Staged by Claude, NOT committed. Needs a repo secret named ANTHROPIC_API_KEY.
+# The action is not hardened against prompt injection, so it only runs on
+# pull requests from branches in this same repository (never forks).
+
+permissions:
+  pull-requests: write  # needed for PR comments
+  contents: read
+
+on:
+  pull_request:
+
+jobs:
+  security:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 2
+
+      # Pinned to the reviewed commit (anthropics/claude-code-security-review, 2026-11-03)
+      - uses: anthropics/claude-code-security-review@0c6a49f1fa56a1d472575da86a94dbc1edb78eda
+        with:
+          comment-pr: true
+          claude-api-key: ${{ secrets.ANTHROPIC_API_KEY }}

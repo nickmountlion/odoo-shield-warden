@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_shield_assessment_kanban" model="ir.ui.view">
+        <field name="name">shield.assessment.kanban</field>
+        <field name="model">shield.assessment</field>
+        <field name="arch" type="xml">
+            <kanban create="false" class="o_kanban_dashboard">
+                <field name="grade"/>
+                <field name="score_delta"/>
+                <field name="has_previous"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <span t-attf-class="badge fs-5 #{record.grade.raw_value in ['A','B'] ? 'text-bg-success' : record.grade.raw_value == 'C' ? 'text-bg-warning' : 'text-bg-danger'}">
+                                <field name="grade"/>
+                            </span>
+                        </div>
+                        <field name="date" class="text-muted small"/>
+                        <div class="row mt-2">
+                            <div class="col-6">Security score<field name="security_score" widget="progressbar"/></div>
+                            <div class="col-6">GRC compliance<field name="grc_score" widget="progressbar"/></div>
+                        </div>
+                        <div t-if="record.has_previous.raw_value" t-attf-class="small fw-bold #{record.score_delta.raw_value &lt; 0 ? 'text-danger' : record.score_delta.raw_value &gt; 0 ? 'text-success' : 'text-muted'}">
+                            <t t-if="record.score_delta.raw_value &lt; 0">&#9660; <t t-out="Math.abs(record.score_delta.raw_value).toFixed(1)"/> pts vs previous assessment</t>
+                            <t t-elif="record.score_delta.raw_value &gt; 0">&#9650; <t t-out="record.score_delta.raw_value.toFixed(1)"/> pts vs previous assessment</t>
+                            <t t-else="">No change vs previous assessment</t>
+                        </div>
+                        <div class="mt-2 small">
+                            <span class="text-danger me-2"><field name="fail_count"/> failed</span>
+                            <span class="text-warning me-2"><field name="warn_count"/> warnings</span>
+                            <span class="text-success me-2"><field name="pass_count"/> passed</span>
+                            <span class="fw-bold text-danger"><field name="critical_count"/> critical</span>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_shield_assessment_list" model="ir.ui.view">
+        <field name="name">shield.assessment.list</field>
+        <field name="model">shield.assessment</field>
+        <field name="arch" type="xml">
+            <list create="false">
+                <header>
+                    <button name="action_run_assessment" type="object" string="Run assessment" class="btn-primary"
+                            display="always" groups="odoo_shield_warden.group_shield_manager"/>
+                </header>
+                <field name="date"/>
+                <field name="name"/>
+                <field name="grade"/>
+                <field name="security_score" widget="progressbar"/>
+                <field name="grc_score" widget="progressbar"/>
+                <field name="critical_count"/>
+                <field name="fail_count"/>
+                <field name="warn_count"/>
+                <field name="pass_count"/>
+                <field name="user_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shield_assessment_graph" model="ir.ui.view">
+        <field name="name">shield.assessment.graph</field>
+        <field name="model">shield.assessment</field>
+        <field name="arch" type="xml">
+            <graph type="line" string="Score trend">
+                <field name="date" interval="week"/>
+                <field name="security_score" type="measure"/>
+                <field name="grc_score" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_shield_assessment_form" model="ir.ui.view">
+        <field name="name">shield.assessment.form</field>
+        <field name="model">shield.assessment</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false">
+                <header>
+                    <button name="action_print_scorecard" type="object" string="Print scorecard" class="btn-primary"/>
+                    <button name="action_run_assessment" type="object" string="Run new assessment"
+                            confirm="This creates a new sealed assessment in the evidence chain. Continue?"
+                            groups="odoo_shield_warden.group_shield_manager"/>
+                    <button name="action_verify_chain" type="object" string="Verify evidence chain"
+                            invisible="not content_hash"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                        <field name="date"/> · Odoo <field name="odoo_version" class="oe_inline"/> <field name="edition" class="oe_inline"/>
+                    </div>
+                    <group>
+                        <group string="Security">
+                            <field name="grade"/>
+                            <field name="security_score" widget="progressbar"/>
+                            <field name="critical_count"/>
+                        </group>
+                        <group string="Compliance">
+                            <field name="grc_score" widget="progressbar"/>
+                            <field name="framework_score_ids" nolabel="1" colspan="2">
+                                <list>
+                                    <field name="framework_id"/>
+                                    <field name="satisfied"/>
+                                    <field name="applicable"/>
+                                    <field name="percent" widget="progressbar"/>
+                                </list>
+                            </field>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Results">
+                            <field name="result_ids">
+                                <list decoration-danger="status == 'fail'" decoration-warning="status == 'warn'"
+                                      decoration-success="status == 'pass'" decoration-muted="status == 'na'">
+                                    <field name="status" widget="badge" decoration-danger="status == 'fail'"
+                                           decoration-warning="status == 'warn'" decoration-success="status == 'pass'"/>
+                                    <field name="severity"/>
+                                    <field name="domain"/>
+                                    <field name="name"/>
+                                    <field name="detail"/>
+                                    <field name="framework_refs" optional="hide"/>
+                                    <field name="kind" optional="hide"/>
+                                    <field name="finding_id" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Counts &amp; seal">
+                            <group>
+                                <group>
+                                    <field name="pass_count"/>
+                                    <field name="warn_count"/>
+                                    <field name="fail_count"/>
+                                    <field name="na_count"/>
+                                    <field name="error_count"/>
+                                </group>
+                                <group string="Evidence seal">
+                                    <field name="content_hash"/>
+                                    <field name="previous_hash"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_shield_assessment_search" model="ir.ui.view">
+        <field name="name">shield.assessment.search</field>
+        <field name="model">shield.assessment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="has_critical" string="With critical issues" domain="[('critical_count', '&gt;', 0)]"/>
+                <group expand="0">
+                    <filter name="group_grade" string="Grade" context="{'group_by': 'grade'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_shield_dashboard" model="ir.actions.act_window">
+        <field name="name">Security Dashboard</field>
+        <field name="res_model">shield.assessment</field>
+        <field name="view_mode">kanban,list,graph,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Run your first security assessment</p>
+            <p>Shield checks authentication, privileged access, platform configuration, encryption,
+               monitoring and upgrade posture, and maps the results to ISO 27001, SOC 2 and CIS Controls.</p>
+        </field>
+    </record>
+
+    <record id="view_shield_run_wizard" model="ir.ui.view">
+        <field name="name">shield.run.wizard.form</field>
+        <field name="model">shield.run.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Run assessment">
+                <p>This runs every control and adds a new sealed assessment to the evidence chain.</p>
+                <field name="last_run" readonly="1"/>
+                <footer>
+                    <button name="action_confirm" type="object" string="Run assessment" class="btn-primary"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_shield_run_wizard" model="ir.actions.act_window">
+        <field name="name">Run assessment</field>
+        <field name="res_model">shield.run.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

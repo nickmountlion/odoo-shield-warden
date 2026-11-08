@@ -1,0 +1,190 @@
+{
+  "label": "v1-baseline",
+  "assessment_id": 15,
+  "security_score": 17.8,
+  "grc_score": 2.4,
+  "detected": 3,
+  "total": 14,
+  "scenarios": [
+    {
+      "scenario": "A1 Silent IBAN swap (tracking disabled) + payment",
+      "detected": false,
+      "checks": [
+        {
+          "control": "ccm_untracked_bank_change",
+          "exists": false,
+          "detected": false,
+          "status": "no control"
+        },
+        {
+          "control": "ccm_bank_change_payment",
+          "exists": true,
+          "detected": false,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "A1b Silent IBAN swap after baseline (wave 2)",
+      "detected": false,
+      "checks": [
+        {
+          "control": "ccm_untracked_bank_change",
+          "exists": false,
+          "detected": false,
+          "status": "no control"
+        }
+      ]
+    },
+    {
+      "scenario": "A2 Vendor IBAN = employee's own account",
+      "detected": false,
+      "checks": [
+        {
+          "control": "ccm_shared_bank_account",
+          "exists": false,
+          "detected": false,
+          "status": "no control"
+        }
+      ]
+    },
+    {
+      "scenario": "A3 Backdoor scheduled action (code in DB)",
+      "detected": false,
+      "checks": [
+        {
+          "control": "db_code_objects",
+          "exists": false,
+          "detected": false,
+          "status": "no control"
+        }
+      ]
+    },
+    {
+      "scenario": "A4 Record rule hiding fraud from auditors",
+      "detected": false,
+      "checks": [
+        {
+          "control": "custom_record_rules",
+          "exists": false,
+          "detected": false,
+          "status": "no control"
+        }
+      ]
+    },
+    {
+      "scenario": "A5 New account with admin rights",
+      "detected": false,
+      "checks": [
+        {
+          "control": "privilege_drift",
+          "exists": false,
+          "detected": false,
+          "status": "no control"
+        }
+      ]
+    },
+    {
+      "scenario": "A6 Brute-force protection disabled",
+      "detected": false,
+      "checks": [
+        {
+          "control": "login_throttling",
+          "exists": false,
+          "detected": false,
+          "status": "no control"
+        }
+      ]
+    },
+    {
+      "scenario": "A7 Mass export of customer data",
+      "detected": false,
+      "checks": [
+        {
+          "control": "mass_export",
+          "exists": false,
+          "detected": false,
+          "status": "no control"
+        }
+      ]
+    },
+    {
+      "scenario": "A8 Template editor granted to non-admin",
+      "detected": false,
+      "checks": [
+        {
+          "control": "template_editors",
+          "exists": false,
+          "detected": false,
+          "status": "no control"
+        }
+      ]
+    },
+    {
+      "scenario": "A9 Weak database credentials",
+      "detected": false,
+      "checks": [
+        {
+          "control": "db_credentials",
+          "exists": false,
+          "detected": false,
+          "status": "no control"
+        }
+      ]
+    },
+    {
+      "scenario": "A10 Misconfigured third-party module",
+      "detected": false,
+      "checks": [
+        {
+          "control": "custom_module_acl",
+          "exists": true,
+          "detected": false,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "R1 Tracked IBAN swap + self-trust (seeded)",
+      "detected": true,
+      "checks": [
+        {
+          "control": "ccm_bank_change_payment",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        },
+        {
+          "control": "ccm_self_trusted_bank",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "R2 Bill entered and paid by same user (seeded)",
+      "detected": true,
+      "checks": [
+        {
+          "control": "ccm_self_paid_bill",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "scenario": "R3 Duplicate vendor bill (seeded)",
+      "detected": true,
+      "checks": [
+        {
+          "control": "ccm_duplicate_bill",
+          "exists": true,
+          "detected": true,
+          "status": "fail"
+        }
+      ]
+    }
+  ]
+}

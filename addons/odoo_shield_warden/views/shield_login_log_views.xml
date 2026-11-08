@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_shield_login_log_list" model="ir.ui.view">
+        <field name="name">shield.login.log.list</field>
+        <field name="model">shield.login.log</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" decoration-danger="not success" decoration-success="success">
+                <field name="create_date" string="When"/>
+                <field name="login"/>
+                <field name="ip"/>
+                <field name="success"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_shield_login_log_search" model="ir.ui.view">
+        <field name="name">shield.login.log.search</field>
+        <field name="model">shield.login.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="login"/>
+                <field name="ip"/>
+                <filter name="failed" string="Failed" domain="[('success', '=', False)]"/>
+                <group>
+                    <filter name="group_login" string="Login" context="{'group_by': 'login'}"/>
+                    <filter name="group_ip" string="IP address" context="{'group_by': 'ip'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_shield_login_log" model="ir.actions.act_window">
+        <field name="name">Login Attempts</field>
+        <field name="res_model">shield.login.log</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No failed logins recorded</p>
+            <p>Failed logins (web, XML-RPC, JSON-RPC) and successes right after failures are recorded here.</p>
+        </field>
+    </record>
+</odoo>

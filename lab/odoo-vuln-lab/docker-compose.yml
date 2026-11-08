@@ -1,0 +1,28 @@
+# INTENTIONALLY VULNERABLE Odoo lab. Localhost only. Never expose.
+name: odoo-vuln-lab
+services:
+  db-a:
+    image: postgres:16
+    environment: {POSTGRES_USER: odoo, POSTGRES_PASSWORD: odoo, POSTGRES_DB: postgres}
+    ports: ["127.0.0.1:5441:5432"]   # vuln: DB reachable with weak creds
+    volumes: [db-a:/var/lib/postgresql/data]
+  odoo-a:
+    image: odoo:18.0
+    restart: on-failure
+    depends_on: [db-a]
+    ports: ["127.0.0.1:8081:8069"]
+    environment: {HOST: db-a, USER: odoo, PASSWORD: odoo}
+    volumes: [./conf-a/odoo.conf:/etc/odoo/odoo.conf:ro, ./seed:/seed:ro, data-a:/var/lib/odoo]
+  db-b:
+    image: postgres:16
+    environment: {POSTGRES_USER: odoo, POSTGRES_PASSWORD: odoo, POSTGRES_DB: postgres}
+    ports: ["127.0.0.1:5442:5432"]
+    volumes: [db-b:/var/lib/postgresql/data]
+  odoo-b:
+    image: odoo:18.0
+    restart: on-failure
+    depends_on: [db-b]
+    ports: ["127.0.0.1:8082:8069"]
+    environment: {HOST: db-b, USER: odoo, PASSWORD: odoo}
+    volumes: [./conf-b/odoo.conf:/etc/odoo/odoo.conf:ro, ./seed:/seed:ro, data-b:/var/lib/odoo]
+volumes: {db-a: {}, db-b: {}, data-a: {}, data-b: {}}

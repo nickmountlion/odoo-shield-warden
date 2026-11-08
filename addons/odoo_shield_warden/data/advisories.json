@@ -1,0 +1,27 @@
+{
+  "_comment": "Offline advisory feed, no network at check time. Every entry needs id, series, module, published, severity and an https source url (entries without one are ignored). Optional: fixed_build (YYYY-MM-DD of the first fixed build; when absent, 'published' is used), summary, example:true (ignored by the check). Add a series to reviewed_series only after checking it against NVD/vendor advisories. Verified 2026-11-03 against the NVD pages and the CCB Belgium advisory #2025-47 listed in each url/sources. NVD records the affected versions as '15.0' and '<=17.0' and gives no fixed build, hence no fixed_build here. Odoo 18.0: no Odoo-core CVE found in the OpenCVE vendor listing on that date (not proof of absence).",
+  "updated": "2026-11-03",
+  "reviewed_series": ["15.0", "17.0", "18.0"],
+  "advisories": [
+    {
+      "id": "CVE-2024-12368",
+      "series": ["15.0"],
+      "module": "auth_oauth",
+      "published": "2025-02-25",
+      "severity": "high",
+      "summary": "Improper access control in auth_oauth: an internal user could export the OAuth tokens of other users.",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-12368",
+      "sources": ["https://ccb.belgium.be/advisories/warning-two-high-improper-access-control-vulnerabilities-odoo-community-enterprise-patch", "https://github.com/odoo/odoo/issues/193854"]
+    },
+    {
+      "id": "CVE-2024-36259",
+      "series": ["17.0"],
+      "module": "mail",
+      "published": "2025-02-25",
+      "severity": "high",
+      "summary": "Improper access control in mail: a remote authenticated attacker could extract sensitive information through an oracle-style (yes/no) attack.",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-36259",
+      "sources": ["https://ccb.belgium.be/advisories/warning-two-high-improper-access-control-vulnerabilities-odoo-community-enterprise-patch", "https://github.com/odoo/odoo/issues/199330"]
+    }
+  ]
+}

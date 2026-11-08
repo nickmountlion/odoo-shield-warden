@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Access risk: who COULD (effective permissions) -->
+    <record id="ctl_sod_redirect_and_pay" model="shield.control">
+        <field name="code">sod_redirect_and_pay</field><field name="sequence">90</field>
+        <field name="name">No one can redirect and pay alone</field>
+        <field name="domain">finance</field><field name="severity">critical</field>
+        <field name="description">Vendor bank-detail fraud is the top payment-fraud vector. Odoo blocks payments to untrusted bank accounts, but a user who can edit the account, trust it and create the payment bypasses that safeguard alone.</field>
+        <field name="remediation">Take "Validate bank account" away from anyone who creates payments; give it to a controller who does not pay. Remove partner-management rights from payment clerks if possible.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('odoo_shield_warden.req_iso_5_3'), ref('odoo_shield_warden.req_iso_8_2'), ref('odoo_shield_warden.req_soc_cc6_3'), ref('odoo_shield_warden.req_cis_5_4')])]"/>
+    </record>
+    <record id="ctl_sod_escalate_and_pay" model="shield.control">
+        <field name="code">sod_escalate_and_pay</field><field name="sequence">91</field>
+        <field name="name">User administrators do not pay</field>
+        <field name="domain">finance</field><field name="severity">critical</field>
+        <field name="description">Whoever can create users and assign rights can give themselves any permission. They should not also process payments.</field>
+        <field name="remediation">Use a dedicated administrator account that is not used for accounting work; remove Billing rights from it.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('odoo_shield_warden.req_iso_5_3'), ref('odoo_shield_warden.req_iso_8_2'), ref('odoo_shield_warden.req_soc_cc6_3'), ref('odoo_shield_warden.req_cis_5_4')])]"/>
+    </record>
+    <record id="ctl_sod_bill_and_pay" model="shield.control">
+        <field name="code">sod_bill_and_pay</field><field name="sequence">92</field>
+        <field name="name">Bill entry separated from payment</field>
+        <field name="domain">finance</field><field name="severity">high</field>
+        <field name="description">Odoo's standard Billing role can both enter vendor bills and pay them. Without a second person, a fictitious bill can be entered and paid by one user.</field>
+        <field name="remediation">Split bill entry and payment between two people, or add an approval step on payments (e.g. batch payments approved by a manager). Review the money-at-risk events weekly as a compensating control.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('odoo_shield_warden.req_iso_5_3'), ref('odoo_shield_warden.req_soc_cc6_3')])]"/>
+    </record>
+
+    <!-- Transaction monitoring: who DID (real data) -->
+    <record id="ctl_ccm_bank_change_payment" model="shield.control">
+        <field name="code">ccm_bank_change_payment</field><field name="sequence">93</field>
+        <field name="name">No payments to freshly changed bank accounts</field>
+        <field name="domain">finance</field><field name="severity">critical</field>
+        <field name="description">Flags outbound payments made within 30 days of the recipient bank account being created or its number changed, the signature of vendor-impersonation fraud.</field>
+        <field name="remediation">Call the vendor on a number you already had to confirm the new account, record the call in the event's review note, and mark it legitimate.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('odoo_shield_warden.req_iso_8_16'), ref('odoo_shield_warden.req_soc_cc7_2')])]"/>
+    </record>
+    <record id="ctl_ccm_self_trusted_bank" model="shield.control">
+        <field name="code">ccm_self_trusted_bank</field><field name="sequence">94</field>
+        <field name="name">Bank accounts verified by a second person</field>
+        <field name="domain">finance</field><field name="severity">high</field>
+        <field name="description">Flags bank accounts that were created or changed and then trusted ("Send Money" enabled) by the same person.</field>
+        <field name="remediation">Have a second person re-verify the account with the vendor and re-trust it.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('odoo_shield_warden.req_iso_5_3'), ref('odoo_shield_warden.req_iso_8_16'), ref('odoo_shield_warden.req_soc_cc7_2')])]"/>
+    </record>
+    <record id="ctl_ccm_self_paid_bill" model="shield.control">
+        <field name="code">ccm_self_paid_bill</field><field name="sequence">95</field>
+        <field name="name">Bills not paid by the person who entered them</field>
+        <field name="domain">finance</field><field name="severity">high</field>
+        <field name="description">Flags payments reconciled with vendor bills entered by the same user.</field>
+        <field name="remediation">Review each event against the purchase order or contract and the vendor's delivery; assign payment to a second person going forward.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('odoo_shield_warden.req_iso_5_3'), ref('odoo_shield_warden.req_iso_8_16'), ref('odoo_shield_warden.req_soc_cc7_2')])]"/>
+    </record>
+    <record id="ctl_ccm_duplicate_bill" model="shield.control">
+        <field name="code">ccm_duplicate_bill</field><field name="sequence">96</field>
+        <field name="name">No duplicate vendor bills</field>
+        <field name="domain">finance</field><field name="severity">medium</field>
+        <field name="description">Flags posted vendor bills with the same vendor, amount and reference (or date) as an earlier bill.</field>
+        <field name="remediation">Confirm with the vendor, then reverse the duplicate with a credit note if it was not legitimate.</field>
+        <field name="requirement_ids" eval="[(6, 0, [ref('odoo_shield_warden.req_iso_8_16'), ref('odoo_shield_warden.req_soc_cc7_2')])]"/>
+    </record>
+</odoo>
