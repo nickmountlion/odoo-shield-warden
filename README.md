@@ -1,10 +1,8 @@
 # Odoo Shield Warden — "Money at Risk" Controls & Continuous GRC Monitoring for Odoo 18
 
 > **Edition:** Portfolio edition of the Shield concept (open-source reference & controls engine for Odoo 18 Self-Hosted / Odoo.sh).  
-> **Commercial edition:** TODO link  
+> **Commercial edition:** available on request  
 > **Focus:** Continuous Controls Monitoring (CCM), Accounts Payable Fraud Prevention, and Cryptographic Audit Integrity
-
-`TODO: [Insert DEMO_GIF here — e.g., docs/assets/demo-money-at-risk-hold.gif showing bank-account swap detection, payment hold enforcement, and SHA-256 evidence chain verification]`
 
 ---
 
